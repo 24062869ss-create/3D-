@@ -1,0 +1,1878 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3Dプリンター管理システム</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<style>
+:root{
+  --bg:#F4F6FA;
+  --bg2:#FFFFFF;
+  --bg3:#EEF1F7;
+  --border:#D8DDED;
+  --border2:#C5CBDF;
+  --text:#1A2035;
+  --text2:#5A6380;
+  --text3:#8B93A8;
+  --blue:#1A5FBE;
+  --blue-l:#E8EFFE;
+  --blue-d:#0D3F8A;
+  --green:#1A8A52;
+  --green-l:#E6F5EE;
+  --orange:#C46A00;
+  --orange-l:#FEF3E2;
+  --red:#C42B2B;
+  --red-l:#FCEAEA;
+  --purple:#5B3DBE;
+  --purple-l:#EFECFC;
+  --gray-l:#F1F3F8;
+  --radius:8px;
+  --radius-lg:12px;
+  --shadow:0 1px 4px rgba(0,0,0,.06);
+  --shadow-md:0 4px 16px rgba(0,0,0,.1);
+  --font:'Noto Sans JP',sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+
+/* ===== LOGIN ===== */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1A2E5A 0%,#1A5FBE 60%,#2D8FD4 100%);padding:1rem}
+.login-box{background:#fff;border-radius:var(--radius-lg);padding:2rem;width:100%;max-width:380px;box-shadow:var(--shadow-md)}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem}
+.login-logo-icon{width:44px;height:44px;background:var(--blue);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.login-logo-icon svg{width:24px;height:24px;fill:#fff}
+.login-title{font-size:17px;font-weight:700;color:var(--text)}
+.login-sub{font-size:12px;color:var(--text2);margin-top:2px}
+label{font-size:12px;color:var(--text2);display:block;margin:10px 0 3px}
+input,select,textarea{width:100%;font-size:13px;font-family:var(--font);padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;color:var(--text);outline:none;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+textarea{resize:vertical;min-height:80px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ms-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px;background:#2F5BB5;color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-family:var(--font);font-weight:600;cursor:pointer;margin-top:14px;transition:background .15s}
+.ms-btn:hover{background:#1e4a9e}
+.admin-toggle{text-align:center;margin-top:12px;font-size:12px;color:var(--text3)}
+.admin-toggle a{color:var(--blue);cursor:pointer;text-decoration:underline}
+.err{font-size:12px;color:var(--red);margin-top:6px}
+.admin-pw-wrap{margin-top:8px}
+
+/* ===== TOPBAR ===== */
+.topbar{background:var(--blue);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;position:sticky;top:0;z-index:100}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-logo{font-size:14px;font-weight:700;color:#fff;letter-spacing:.02em}
+.topbar-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
+.tb-user{background:rgba(255,255,255,.2);color:#fff}
+.tb-admin{background:#FFD700;color:#1A2035}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.avatar{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+.user-disp{font-size:12px;color:rgba(255,255,255,.85)}
+.logout-btn{font-size:12px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:6px;color:#fff;padding:4px 10px;cursor:pointer;transition:background .15s;font-family:var(--font)}
+.logout-btn:hover{background:rgba(255,255,255,.25)}
+
+/* ===== NAV ===== */
+.nav{background:#fff;border-bottom:1px solid var(--border);display:flex;padding:0 .75rem;overflow-x:auto;gap:0}
+.nav-btn{padding:11px 14px;font-size:13px;font-family:var(--font);background:none;border:none;border-bottom:2.5px solid transparent;cursor:pointer;color:var(--text2);white-space:nowrap;transition:all .12s;position:relative}
+.nav-btn.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+.nav-btn:hover{color:var(--text)}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:var(--red);position:absolute;top:8px;right:6px}
+
+/* ===== CONTENT ===== */
+.content{padding:1.25rem;max-width:1000px;margin:0 auto}
+.panel{display:none}.panel.active{display:block}
+
+/* ===== CARDS ===== */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1rem;box-shadow:var(--shadow)}
+.card-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.card-title svg{width:16px;height:16px;fill:var(--blue);flex-shrink:0}
+
+/* ===== BADGES ===== */
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+.b-using{background:var(--red-l);color:var(--red)}
+.b-approved{background:var(--green-l);color:var(--green)}
+.b-pending{background:var(--orange-l);color:var(--orange)}
+.b-done{background:var(--gray-l);color:var(--text2)}
+.b-ans{background:var(--green-l);color:var(--green)}
+.b-wait{background:var(--orange-l);color:var(--orange)}
+.b-ai{background:var(--blue-l);color:var(--blue)}
+.b-admin{background:var(--purple-l);color:var(--purple)}
+.b-info{background:var(--blue-l);color:var(--blue)}
+
+/* ===== NOTICE ===== */
+.notice{border-radius:var(--radius);padding:10px 14px;margin-bottom:10px;font-size:12px;line-height:1.75}
+.notice-warn{background:var(--orange-l);border:1px solid #F5C97A}
+.notice-warn h3{font-size:13px;font-weight:700;color:var(--orange);margin-bottom:6px}
+.notice-warn ul,.notice-info ul,.notice-first ul{padding-left:16px;line-height:1.9}
+.notice-warn ul li,.notice-warn p{color:#7A4500}
+.notice-info{background:var(--blue-l);border:1px solid #9FBDE8;color:var(--blue-d)}
+.notice-first{background:var(--purple-l);border:1px solid #C0B5EE}
+.notice-first h3{font-size:13px;font-weight:700;color:var(--purple);margin-bottom:6px}
+.notice-first ul li{color:#3D2A9E}
+.notice-green{background:var(--green-l);border:1px solid #9FD4B7;color:var(--green);font-size:12px;border-radius:var(--radius);padding:8px 12px;margin-bottom:8px}
+
+/* ===== BUTTONS ===== */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;font-size:12px;font-family:var(--font);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;background:#fff;color:var(--text);transition:all .12s;text-decoration:none}
+.btn:hover{background:var(--bg)}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover{background:var(--blue-d)}
+.btn-danger{background:var(--red-l);color:var(--red);border-color:#F5B5B5}
+.btn-danger:hover{background:#F7C1C1}
+.btn-green{background:var(--green-l);color:var(--green);border-color:#9FD4B7}
+.btn-green:hover{background:#C5EDD9}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-xs{padding:3px 8px;font-size:11px}
+
+/* ===== GRID ===== */
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}.grid3{grid-template-columns:1fr 1fr}}
+
+/* ===== STAT ===== */
+.stat-card{background:var(--bg3);border-radius:var(--radius);padding:.75rem;text-align:center}
+.stat-label{font-size:11px;color:var(--text2);margin-bottom:3px}
+.stat-value{font-size:24px;font-weight:700;color:var(--text);font-family:var(--mono)}
+
+/* ===== PRINTER STATUS ===== */
+.pstatus{background:var(--bg3);border-radius:var(--radius);padding:9px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.pdot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dot-free{background:#2FB070;box-shadow:0 0 0 3px rgba(47,176,112,.2)}
+.dot-busy{background:var(--red);box-shadow:0 0 0 3px rgba(196,43,43,.2)}
+.dot-soon{background:var(--orange)}
+.pname{font-size:13px;font-weight:600;color:var(--text);min-width:160px}
+.pinfo{font-size:12px;color:var(--text2);flex:1}
+
+/* ===== CALENDAR ===== */
+.cal-wrap{margin-bottom:0}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-dh{font-size:11px;color:var(--text2);text-align:center;padding:3px;font-weight:600}
+.cal-day{min-height:46px;background:var(--bg3);border-radius:5px;padding:3px;cursor:pointer;border:1.5px solid transparent;transition:border-color .1s,background .1s}
+.cal-day:hover{border-color:var(--border2)}
+.cal-day.today{background:var(--blue-l)}
+.cal-day.selected{border-color:var(--blue)}
+.cal-day.other{opacity:.3;pointer-events:none}
+.cal-day.past{opacity:.4;pointer-events:none}
+.cal-day.toofar{opacity:.4;pointer-events:none}
+.cal-dnum{font-size:10px;color:var(--text2);font-weight:600}
+.cal-slot{font-size:9px;border-radius:3px;padding:1px 3px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#fff}
+.cs-p2s{background:var(--blue)}
+.cs-k1c{background:var(--green)}
+.cs-using{background:var(--red)}
+
+/* ===== RESERVATION ITEM ===== */
+.res-item{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;gap:8px}
+.res-item.using{border-left:3px solid var(--red)}
+.res-item.mine{border-left:3px solid var(--blue)}
+.res-item.approved{border-left:3px solid var(--green)}
+.res-main{flex:1;min-width:0}
+.res-name{font-size:13px;font-weight:600;color:var(--text)}
+.res-sub{font-size:11px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ===== GUIDE ===== */
+.guide-step{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)}
+.guide-step:last-child{border-bottom:none}
+.gnum{width:24px;height:24px;border-radius:50%;background:var(--blue-l);color:var(--blue);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.gtext{font-size:13px;color:var(--text);line-height:1.6}
+.gsub{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.6}
+
+/* ===== FAQ ===== */
+.faq-item{border-bottom:1px solid var(--border);padding:9px 0}
+.faq-q{font-size:13px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;align-items:center;color:var(--text);gap:8px}
+.faq-a{font-size:12px;color:var(--text2);margin-top:7px;line-height:1.75;display:none;padding:8px 10px;background:var(--bg3);border-radius:var(--radius)}
+.faq-a.open{display:block}
+
+/* ===== TROUBLE ===== */
+.tr-item{border-left:3px solid var(--red);padding:9px 14px;background:var(--red-l);border-radius:0 var(--radius) var(--radius) 0;margin-bottom:8px}
+.tr-title{font-size:13px;font-weight:700;color:var(--red)}
+.tr-body{font-size:12px;color:#791F1F;margin-top:4px;line-height:1.75}
+.tlink{font-size:12px;color:var(--blue);text-decoration:none}
+.tlink:hover{text-decoration:underline}
+
+/* ===== FLOW ===== */
+.flow-box{background:var(--bg3);border-radius:var(--radius);padding:10px 14px;margin-bottom:7px}
+.flow-who{font-size:12px;font-weight:700;margin-bottom:2px}
+.flow-text{font-size:12px;color:var(--text2);line-height:1.6}
+.fw-hs{color:var(--blue)}
+.fw-sci{color:var(--orange)}
+.fw-ishi{color:var(--purple)}
+.fw-sat{color:var(--green)}
+
+/* ===== TABS ===== */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:12px;gap:0}
+.tab{padding:7px 14px;font-size:12px;font-family:var(--font);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;color:var(--text2);font-weight:500;transition:all .12s;white-space:nowrap}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:700}
+.tab:hover{color:var(--text)}
+
+/* ===== QUESTIONS ===== */
+.q-item{background:var(--bg3);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;border:1px solid var(--border)}
+.q-meta{font-size:11px;color:var(--text2);display:flex;gap:6px;flex-wrap:wrap;margin-bottom:5px;align-items:center}
+.q-body{font-size:13px;color:var(--text);line-height:1.6}
+.q-ans{margin-top:8px;padding:9px 12px;background:#fff;border-radius:var(--radius);border:1px solid var(--border)}
+.q-ans-label{font-size:11px;font-weight:700;margin-bottom:4px}
+.q-ans-text{font-size:12px;color:var(--text2);line-height:1.7}
+.mail-hint{background:var(--green-l);border:1px solid #9FD4B7;border-radius:var(--radius);padding:8px 12px;font-size:12px;color:var(--green);margin-top:8px;display:flex;align-items:center;gap:8px}
+.q-reply-box{margin-top:8px;background:#fff;padding:8px;border-radius:var(--radius);border:1px solid var(--border);display:none}
+.q-reply-box.open{display:block}
+
+/* ===== ADMIN ===== */
+.admin-section{background:#fff;border:1.5px solid var(--purple);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1rem}
+.admin-section-title{font-size:13px;font-weight:700;color:var(--purple);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.admin-res-item{background:var(--bg3);border-radius:var(--radius);padding:9px 12px;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.admin-q-item{background:var(--bg3);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;border:1px solid var(--border)}
+.pw-change-wrap{margin-top:10px;padding:10px;background:var(--bg3);border-radius:var(--radius);display:none;}
+
+/* ===== MISC ===== */
+.sep{height:1px;background:var(--border);margin:12px 0}
+.empty{font-size:12px;color:var(--text3);padding:8px 0;text-align:center}
+.time-chip{font-family:var(--mono);font-size:11px;color:var(--text2)}
+.inline-btn-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+</style>
+</head>
+<body>
+
+<!-- ========== LOGIN ========== -->
+<div id="login-wrap" class="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 017 7c0 2.5-1.3 4.7-3.3 6L14 21H10l-1.7-6A7 7 0 0112 2zm0 2a5 5 0 00-5 5 5 5 0 003.2 4.6L11.5 19h1l1.3-5.4A5 5 0 0017 9a5 5 0 00-5-5z"/></svg>
+      </div>
+      <div>
+        <div class="login-title">3Dプリンター管理システム</div>
+        <div class="login-sub">学校Microsoftアカウントでログイン</div>
+      </div>
+    </div>
+
+    <div id="login-user-form">
+      <!-- STEP 1: MS Login -->
+      <div id="lg-step1">
+        <label>学校メールアドレス</label>
+        <input type="email" id="lg-email" placeholder="例：s1234567@spc.ritsumei.ac.jp" oninput="lgEmailHint()">
+        <div id="lg-email-hint" style="font-size:11px;margin-top:4px;color:var(--text3)"></div>
+        <button class="ms-btn" onclick="doMsAuth()">
+          <svg width="18" height="18" viewBox="0 0 21 21"><rect width="10" height="10" fill="#F25022"/><rect x="11" width="10" height="10" fill="#7FBA00"/><rect y="11" width="10" height="10" fill="#00A4EF"/><rect x="11" y="11" width="10" height="10" fill="#FFB900"/></svg>
+          Microsoftアカウントでログイン
+        </button>
+        <div class="err" id="lg-err"></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center">
+          生徒ID：s + 数字7桁（例: s1234567@spc.ritsumei.ac.jp）<br>
+          教員：s+7桁以外のメールアドレス（ドメイン不問）
+        </div>
+      </div>
+
+      <!-- STEP 2: Detail info -->
+      <div id="lg-step2" style="display:none">
+        <div id="lg-detected-type" style="font-size:12px;padding:6px 10px;border-radius:6px;margin-bottom:10px;background:var(--green-l);color:var(--green);font-weight:600"></div>
+
+        <!-- 生徒：統一セレクト方式 -->
+        <div id="lg-student-block" style="display:none">
+          <label>校種・学年・組</label>
+          <select id="lg-grade-cls" onchange="lgGradeClsChange()">
+            <option value="">選択してください</option>
+            <optgroup label="── 中学生 ──">
+              <option value="jhs|中学1年|1組">中学1年 1組</option>
+              <option value="jhs|中学1年|2組">中学1年 2組</option>
+              <option value="jhs|中学1年|3組">中学1年 3組</option>
+              <option value="jhs|中学1年|4組">中学1年 4組</option>
+              <option value="jhs|中学1年|5組">中学1年 5組</option>
+              <option value="jhs|中学1年|6組">中学1年 6組</option>
+              <option value="jhs|中学2年|1組">中学2年 1組</option>
+              <option value="jhs|中学2年|2組">中学2年 2組</option>
+              <option value="jhs|中学2年|3組">中学2年 3組</option>
+              <option value="jhs|中学2年|4組">中学2年 4組</option>
+              <option value="jhs|中学2年|5組">中学2年 5組</option>
+              <option value="jhs|中学2年|6組">中学2年 6組</option>
+              <option value="jhs|中学3年|1組">中学3年 1組</option>
+              <option value="jhs|中学3年|2組">中学3年 2組</option>
+              <option value="jhs|中学3年|3組">中学3年 3組</option>
+              <option value="jhs|中学3年|4組">中学3年 4組</option>
+              <option value="jhs|中学3年|5組">中学3年 5組</option>
+              <option value="jhs|中学3年|6組">中学3年 6組</option>
+            </optgroup>
+            <optgroup label="── 高校生 ──">
+              <option value="hs|高校1年|A組">高校1年 A組</option>
+              <option value="hs|高校1年|B組">高校1年 B組</option>
+              <option value="hs|高校1年|C組">高校1年 C組</option>
+              <option value="hs|高校1年|D組">高校1年 D組</option>
+              <option value="hs|高校1年|E組">高校1年 E組</option>
+              <option value="hs|高校1年|F組">高校1年 F組</option>
+              <option value="hs|高校1年|G組">高校1年 G組</option>
+              <option value="hs|高校1年|H組">高校1年 H組</option>
+              <option value="hs|高校1年|I組">高校1年 I組</option>
+              <option value="hs|高校1年|J組">高校1年 J組</option>
+              <option value="hs|高校2年|A組">高校2年 A組</option>
+              <option value="hs|高校2年|B組">高校2年 B組</option>
+              <option value="hs|高校2年|C組">高校2年 C組</option>
+              <option value="hs|高校2年|D組">高校2年 D組</option>
+              <option value="hs|高校2年|E組">高校2年 E組</option>
+              <option value="hs|高校2年|F組">高校2年 F組</option>
+              <option value="hs|高校2年|G組">高校2年 G組</option>
+              <option value="hs|高校2年|H組">高校2年 H組</option>
+              <option value="hs|高校2年|I組">高校2年 I組</option>
+              <option value="hs|高校2年|J組">高校2年 J組</option>
+              <option value="hs|高校3年|A組">高校3年 A組</option>
+              <option value="hs|高校3年|B組">高校3年 B組</option>
+              <option value="hs|高校3年|C組">高校3年 C組</option>
+              <option value="hs|高校3年|D組">高校3年 D組</option>
+              <option value="hs|高校3年|E組">高校3年 E組</option>
+              <option value="hs|高校3年|F組">高校3年 F組</option>
+              <option value="hs|高校3年|G組">高校3年 G組</option>
+              <option value="hs|高校3年|H組">高校3年 H組</option>
+              <option value="hs|高校3年|I組">高校3年 I組</option>
+              <option value="hs|高校3年|J組">高校3年 J組</option>
+            </optgroup>
+          </select>
+          <div id="lg-jhs-warn" style="display:none" class="notice notice-warn" style="margin-top:6px">
+            <strong>中学生の方：</strong>予約前に必ず中学理科の先生に相談し、石川真尚先生（高2）の承認を取ってください。
+          </div>
+        </div>
+
+        <!-- 教員 -->
+        <div id="lg-teacher-block" style="display:none">
+          <label>担当・役職</label>
+          <select id="tc">
+            <option value="">選択してください</option>
+            <option value="中学所属">中学所属</option>
+            <option value="高校所属">高校所属</option>
+            <option value="その他">その他</option>
+          </select>
+        </div>
+
+        <label>氏名</label>
+        <input type="text" id="lg-name" placeholder="例：山田 太郎">
+
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn btn-primary" onclick="doLogin()" style="flex:1">ログイン</button>
+          <button class="btn" onclick="lgBack()">戻る</button>
+        </div>
+        <div class="err" id="lg-err2"></div>
+      </div>
+
+      <div class="admin-toggle"><a onclick="showAdminLogin()">管理者ログインはこちら</a></div>
+    </div>
+
+    <div id="login-admin-form" style="display:none">
+      <div class="notice-info notice" style="margin-bottom:10px">管理者専用ログイン</div>
+      <label>管理者名</label>
+      <select id="admin-user">
+        <option value="">選択してください</option>
+        <option value="satake">3D佐竹（管理者）</option>
+        <option value="ishikawa">石川真尚先生（高2・承認責任者）</option>
+      </select>
+      <label>パスワード</label>
+      <input type="password" id="admin-pw" placeholder="管理者パスワード">
+      <button class="ms-btn" onclick="doAdminLogin()" style="margin-top:12px">管理者としてログイン</button>
+      <div class="err" id="admin-err"></div>
+      <div class="admin-toggle"><a onclick="showUserLogin()">← 通常ログインに戻る</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MAIN APP ========== -->
+<div id="main-app" style="display:none">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">3Dプリンター管理</div>
+      <span class="topbar-badge tb-user" id="role-badge">生徒</span>
+    </div>
+    <div class="topbar-right">
+      <span class="user-disp" id="user-disp"></span>
+      <div class="avatar" id="user-av">?</div>
+      <button class="logout-btn" onclick="doLogout()">ログアウト</button>
+    </div>
+  </div>
+
+  <nav class="nav" id="main-nav">
+    <button class="nav-btn active" onclick="showPanel('home',this)">ホーム</button>
+    <button class="nav-btn" onclick="showPanel('reserve',this)">予約</button>
+    <button class="nav-btn" onclick="showPanel('myres',this)">自分の予約</button>
+    <button class="nav-btn" onclick="showPanel('guide',this)">使い方ガイド</button>
+    <button class="nav-btn" id="nav-qa" onclick="showPanel('qa',this)">質問</button>
+    <button class="nav-btn" onclick="showPanel('trouble',this)">トラブル対応</button>
+    <button class="nav-btn" onclick="showPanel('flow',this)">利用フロー</button>
+    <button class="nav-btn" id="nav-admin" style="display:none;color:var(--purple)" onclick="showPanel('admin',this)">管理者 <span id="admin-alert-dot" style="display:none" class="nav-dot"></span></button>
+  </nav>
+
+  <div class="content">
+
+    <!-- ===== HOME ===== -->
+    <div id="panel-home" class="panel active">
+      <div id="first-notice" style="display:none">
+        <div class="notice notice-first">
+          <h3>🎉 はじめて利用する方へ</h3>
+          <ul>
+            <li>予約前に必ず「利用フロー」タブで手順を確認してください</li>
+            <li>初回は3D佐竹によるサポートがあります。<strong>時間にゆとりを持って予約してください</strong></li>
+            <li id="jhs-first-msg" style="display:none">中学生は先に中学理科の先生に相談し、石川真尚先生（高2）の承認が必要です</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="notice notice-warn">
+        <h3>⚠ 使用上の注意事項（必ずお読みください）</h3>
+        <ul>
+          <li>使用前に必ず先生・管理者の許可を得てください</li>
+          <li>稼働中のプリンターには絶対に触れないでください（高温・可動部あり）</li>
+          <li>フィラメントの交換は先生の立ち会いのもとで行ってください</li>
+          <li>印刷中は定期的に確認し、異常があればすぐに停止して先生に報告してください</li>
+          <li><strong>放課後は最大2台同時使用まで</strong>（Bambu Lab P2S は1台のみ運用中）</li>
+          <li>印刷完了後はプレートを清潔に保ち、使用記録を入力してください</li>
+          <li>エラーが出たら自己判断で修理せず、「トラブル対応」ページを確認してください</li>
+          <li><strong>中学生は中学理科の先生に相談の上、先生と一緒に高2所属石川真尚先生まで確認・予約を取ること</strong></li>
+          <li>使用の説明や手順は3D佐竹がサポートします。初回は特に時間にゆとりを持つこと</li>
+        </ul>
+      </div>
+
+      <div class="grid3" id="stat-grid">
+        <div class="stat-card"><div class="stat-label">本日の予約件数</div><div class="stat-value" id="stat-today">0</div></div>
+        <div class="stat-card"><div class="stat-label">自分の予約件数</div><div class="stat-value" id="my-count">0</div></div>
+        <div class="stat-card"><div class="stat-label">未回答の質問</div><div class="stat-value" id="stat-q">0</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/><line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2"/><line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="3"/></svg>
+          プリンター稼働状況
+        </div>
+        <div id="printer-status-home"></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;padding:6px 10px;background:var(--bg3);border-radius:var(--radius)">※ Bambu Lab P2S は1台のみ運用中です。時間になると自動で「使用中」に変わります。</div>
+      </div>
+    </div>
+
+    <!-- ===== RESERVE ===== -->
+    <div id="panel-reserve" class="panel">
+      <div class="grid2" style="align-items:start">
+        <div>
+          <div class="card">
+            <div class="cal-wrap">
+              <div class="cal-header">
+                <span style="font-size:13px;font-weight:600" id="cal-lbl"></span>
+                <div style="display:flex;gap:5px">
+                  <button class="btn btn-sm" onclick="calNav(-1)">‹</button>
+                  <button class="btn btn-sm" onclick="calNav(1)">›</button>
+                </div>
+              </div>
+              <div class="cal-grid" id="cal-grid">
+                <div class="cal-dh">日</div><div class="cal-dh">月</div><div class="cal-dh">火</div>
+                <div class="cal-dh">水</div><div class="cal-dh">木</div><div class="cal-dh">金</div><div class="cal-dh">土</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">選択した日の予約</div>
+            <div id="day-res-list"><div class="empty">カレンダーで日付を選択してください</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-title">新規予約</div>
+            <div id="jhs-rule-box" style="display:none" class="notice notice-warn">
+              <h3>中学生の方へ（必読）</h3>
+              <ul>
+                <li>予約前に中学理科の先生に相談・了承を得てください</li>
+                <li>中学理科の先生と一緒に石川真尚先生（高2）まで確認・承認を取ること</li>
+                <li>承認後に予約が確定します</li>
+              </ul>
+            </div>
+            <label>プリンター</label>
+            <select id="r-printer">
+              <option value="k1c">Creality K1C（機体①）</option>
+              <option value="p2s">Bambu Lab P2S（機体②・1台のみ）</option>
+            </select>
+            <label>日付</label>
+            <input type="date" id="r-date">
+            <label>開始時刻</label>
+            <input type="time" id="r-time" value="15:30">
+            <label>所要時間（分）</label>
+            <input type="number" id="r-dur" min="10" max="480" placeholder="例：90（スライサーで確認した時間＋余裕分）">
+            <label>印刷目的（基本）</label>
+            <select id="r-purpose">
+              <option>授業・課題</option><option>部活・クラブ活動</option><option>自由研究</option>
+              <option>学校行事用制作物</option><option>その他</option>
+            </select>
+            <label>印刷目的（詳細）</label>
+            <textarea id="r-detail" placeholder="何を印刷するか具体的に記入（例：理科実験用 直径20mmの円筒容器）"></textarea>
+            <label>フィラメント材料</label>
+            <select id="r-filament">
+              <option>PLA（標準）</option><option>PETG</option><option>ABS（要換気）</option><option>TPU</option><option>カーボンフィラメント（K1C専用）</option><option>その他</option>
+            </select>
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <button class="btn btn-primary" onclick="submitRes()">予約する</button>
+              <button class="btn" onclick="clearRes()">クリア</button>
+            </div>
+            <div id="r-msg" style="font-size:12px;margin-top:6px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MY RESERVATIONS ===== -->
+    <div id="panel-myres" class="panel">
+      <div class="card">
+        <div class="card-title">自分の予約一覧</div>
+        <div class="notice notice-info" style="font-size:12px">自分が申請した予約のみ表示されます。削除できるのは「使用中」以外の予約のみです。</div>
+        <div id="my-res-list"></div>
+      </div>
+    </div>
+
+    <!-- ===== GUIDE ===== -->
+    <div id="panel-guide" class="panel">
+      <div class="tabs">
+        <button class="tab active" onclick="gTab('basic',this)">基本手順</button>
+        <button class="tab" onclick="gTab('p2s',this)">Bambu P2S</button>
+        <button class="tab" onclick="gTab('k1c',this)">Creality K1C</button>
+        <button class="tab" onclick="gTab('sw',this)">ソフトウェア</button>
+      </div>
+      <div id="g-basic">
+        <div class="card">
+          <div class="card-title">3Dプリンターを使う基本手順</div>
+          <div class="guide-step"><div class="gnum">1</div><div><div class="gtext">利用フローを確認する</div><div class="gsub">「利用フロー」タブで自分（高校生 or 中学生 or 教員）のフローを確認してください</div></div></div>
+          <div class="guide-step"><div class="gnum">2</div><div><div class="gtext">3Dモデルデータを準備する</div><div class="gsub">Tinkercad・Fusion 360等でSTL/3MFファイルを作成します</div></div></div>
+          <div class="guide-step"><div class="gnum">3</div><div><div class="gtext">スライサーソフトで変換する</div><div class="gsub">P2S → Bambu Studio　/　K1C → Creality Print　（スライサーで所要時間を事前確認してください）</div></div></div>
+          <div class="guide-step"><div class="gnum">4</div><div><div class="gtext">予約を入れる（最大1か月先まで）</div><div class="gsub">「予約」タブから開始時刻＋所要時間（分）を入力。初回は時間に余裕を持って設定してください</div></div></div>
+          <div class="guide-step"><div class="gnum">5</div><div><div class="gtext">承認を待つ</div><div class="gsub">石川真尚先生による承認後に予約が確定します。中学生は中学理科の先生と一緒に確認が必要です</div></div></div>
+          <div class="guide-step"><div class="gnum">6</div><div><div class="gtext">3D佐竹によるサポートを受ける</div><div class="gsub"><strong style="color:var(--red)">初回は特に説明が多いため、時間にゆとりを持って参加してください</strong></div></div></div>
+          <div class="guide-step"><div class="gnum">7</div><div><div class="gtext">時間になったら「使用中」に変更（自動）</div><div class="gsub">開始時刻になるとシステムが自動で「使用中」に変更します。実際に使用を開始してください</div></div></div>
+          <div class="guide-step"><div class="gnum">8</div><div><div class="gtext">後片付け・使用記録を入力して終了</div><div class="gsub">プレートを清掃し、「自分の予約」から完了ボタンを押して記録してください</div></div></div>
+        </div>
+      </div>
+      <div id="g-p2s" style="display:none">
+        <div class="card">
+          <div class="card-title">Bambu Lab P2S（機体②）— 操作手順</div>
+          <div class="notice notice-info" style="margin-bottom:10px">完全密閉型チャンバー / AMS自動フィラメント交換 / カメラ印刷監視（スパゲッティ検出）搭載 ／ <strong>1台のみ運用</strong></div>
+          <div class="guide-step"><div class="gnum">1</div><div><div class="gtext">電源を入れて起動を待つ（約30秒）</div></div></div>
+          <div class="guide-step"><div class="gnum">2</div><div><div class="gtext">AMSのフィラメントを確認・セット</div><div class="gsub">フィラメントがない場合は先生に相談してください</div></div></div>
+          <div class="guide-step"><div class="gnum">3</div><div><div class="gtext">Bambu StudioからWi-Fiで印刷データを送信</div></div></div>
+          <div class="guide-step"><div class="gnum">4</div><div><div class="gtext">タッチスクリーンまたはBambu Studioから「印刷開始」</div></div></div>
+          <div class="guide-step"><div class="gnum">5</div><div><div class="gtext">印刷完了後、プレートを冷却（約5分）してから取り外す</div><div class="gsub">プレートを軽く曲げると剥がれやすい</div></div></div>
+          <div style="margin-top:10px"><a href="https://wiki.bambulab.com/en/p2s" class="tlink" target="_blank">→ Bambu Lab P2S 公式Wiki</a></div>
+        </div>
+      </div>
+      <div id="g-k1c" style="display:none">
+        <div class="card">
+          <div class="card-title">Creality K1C（機体①）— 操作手順</div>
+          <div class="notice notice-info" style="margin-bottom:10px">CoreXZ方式・最大300mm/s / LiDARセンサー自動キャリブレーション / AIカメラ監視機能搭載</div>
+          <div class="guide-step"><div class="gnum">1</div><div><div class="gtext">電源を入れ、自己診断を待つ</div><div class="gsub">起動時に自動でキャリブレーションが実行されます</div></div></div>
+          <div class="guide-step"><div class="gnum">2</div><div><div class="gtext">タッチスクリーンの「フィラメント」→「ロード」でセット</div></div></div>
+          <div class="guide-step"><div class="gnum">3</div><div><div class="gtext">Creality PrintでスライスしてWi-Fi転送 or USBメモリ</div></div></div>
+          <div class="guide-step"><div class="gnum">4</div><div><div class="gtext">印刷開始。Creality CloudアプリでリモートモニタリングもOK</div></div></div>
+          <div style="margin-top:10px"><a href="https://wiki.creality.com/en/k1-flagship-series/k1c" class="tlink" target="_blank">→ Creality K1C 公式Wiki</a></div>
+        </div>
+      </div>
+      <div id="g-sw" style="display:none">
+        <div class="card">
+          <div class="card-title">スライサーソフトウェア（無料）</div>
+          <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+            <div style="font-size:13px;font-weight:600;margin-bottom:3px">P2S用：Bambu Studio</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:5px">Wi-Fi経由でP2Sに直接送信できます。所要時間の事前確認も可能です。</div>
+            <a href="https://bambulab.com/en/download/studio" class="tlink" target="_blank">→ Bambu Studio ダウンロード</a>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:3px">K1C用：Creality Print</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:5px">K1Cのプリセットが内蔵されています。</div>
+            <a href="https://www.creality.com/pages/download-software" class="tlink" target="_blank">→ Creality Print ダウンロード</a>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">3Dモデリングツール（無料）</div>
+          <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Tinkercad（初心者向け）<span>▸</span></div><div class="faq-a">ブラウザで使えるオンラインツール。アカウント登録のみで無料。ブロックを組み合わせてモデリング。 → <a href="https://tinkercad.com" class="tlink" target="_blank">tinkercad.com</a></div></div>
+          <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Fusion 360（中〜上級者向け）<span>▸</span></div><div class="faq-a">Autodesk社の本格CADソフト。学生・教育機関は無料ライセンスあり。高校生以上におすすめ。</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== QA ===== -->
+    <div id="panel-qa" class="panel">
+      <div class="tabs">
+        <button class="tab active" onclick="qaTab('ask',this)">質問する</button>
+        <button class="tab" onclick="qaTab('list',this)">自分の質問</button>
+        <button class="tab" onclick="qaTab('faq',this)">よくある質問</button>
+      </div>
+
+      <div id="qa-ask">
+        <div class="card">
+          <div class="card-title">質問を投稿する</div>
+          <div class="notice notice-info" style="font-size:12px">
+            まず「よくある質問」で解決できるか確認してください。解決しない場合に投稿してください。<br>
+            ・すべての質問は <strong>3D佐竹と石川先生の両方</strong> に通知されます（自動回答はありません）<br>
+            ・回答が届いたらあなたの学校メールにも通知されます
+          </div>
+          <label>カテゴリ</label>
+          <select id="q-cat">
+            <option>使い方・操作方法</option><option>フィラメントについて</option><option>スライサーソフト</option>
+            <option>印刷品質の改善</option><option>エラー・トラブル</option><option>予約について</option><option>その他</option>
+          </select>
+
+          <label>質問内容</label>
+          <textarea id="q-text" placeholder="機器名・エラー内容・試したことなどを具体的に記入してください"></textarea>
+          <div style="margin-top:10px">
+            <button class="btn btn-primary" onclick="submitQ()">送信する</button>
+          </div>
+          <div id="q-msg" style="font-size:12px;margin-top:6px"></div>
+          <div id="q-mail-hint" style="display:none" class="mail-hint">
+            <span>✉</span>
+            <span>Outlookが開きます。送信ボタンを押して佐竹・石川先生への通知を完了してください。</span>
+          </div>
+          <div id="q-mail-link-wrap" style="display:none;margin-top:6px"></div>
+        </div>
+      </div><!-- /qa-ask -->
+
+      <div id="qa-list" style="display:none">
+        <div class="card">
+          <div class="card-title">自分の質問一覧</div>
+          <div id="q-list-content"></div>
+        </div>
+      </div>
+
+      <div id="qa-faq" style="display:none">
+        <div class="card">
+          <div class="card-title">よくある質問（FAQ）</div>
+          <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">印刷が途中で止まってしまいました<span>▸</span></div><div class="faq-a">プリンターの画面でエラーコードを確認してください。フィラメント切れなら補充して再開できます。それ以外は「トラブル対応」ページを確認し、解決しない場合は先生へ報告してください。</div></div>
+          <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">フィラメントが詰まりました<span>▸</span></div><div class="faq-a">自己対処は危険です。「トラブル対応」ページの手順を確認してから先生に報告してください。強引に引き抜くとノズルが壊れます。</div></div>
+          <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">印刷物がプレートから取れません<span>▸</span></div><div class="faq-a">完全に冷ましてから（5分以上）、プレートを軽く曲げると剥がれやすくなります。P2Sはプレートを本体から取り外して冷却すると効果的です。</div></div>
+          <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">印刷にどのくらい時間がかかりますか？<span>▸</span></div><div class="faq-a">モデルの大きさや設定によって異なります。小さなパーツで15〜30分、大きなものは数時間。スライサーソフトで事前に確認できます。予約の所要時間は必ず余裕を持って入力してください。</div></div>
+          <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">PLA以外のフィラメントを使いたい<span>▸</span></div><div class="faq-a">フィラメントの種類によって温度設定が異なります。必ず先生の許可を得てから使用してください。ABSは換気が必要です。K1Cはカーボンフィラメントに対応しています。</div></div>
+          <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">STLファイルとは何ですか？<span>▸</span></div><div class="faq-a">3Dプリンターで使用するモデルの標準ファイル形式です。TinkercadやFusion 360からエクスポートできます。スライサーソフトに読み込んでGコードに変換してから印刷します。</div></div>
+          <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">予約はいつまで入れられますか？<span>▸</span></div><div class="faq-a">最大1か月先まで予約できます。また、放課後に使えるのは2台同時までです（P2Sは1台のみ運用）。</div></div>
+          <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">中学生はどうやって予約しますか？<span>▸</span></div><div class="faq-a">①まず中学理科の先生に相談・了承をもらう → ②中学理科の先生と一緒に高2・石川真尚先生まで確認・承認を取る → ③システムで予約を申請 → ④石川先生がシステム上で承認後に予約確定。</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TROUBLE ===== -->
+    <div id="panel-trouble" class="panel">
+      <div class="tabs">
+        <button class="tab active" onclick="trTab('p2s',this)">Bambu Lab P2S</button>
+        <button class="tab" onclick="trTab('k1c',this)">Creality K1C</button>
+        <button class="tab" onclick="trTab('gen',this)">共通・緊急時</button>
+      </div>
+      <div id="tr-p2s">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">出典: <a href="https://wiki.bambulab.com/en/p2s" class="tlink" target="_blank">Bambu Lab 公式Wiki（P2S）</a></div>
+        <div class="tr-item"><div class="tr-title">ノズル詰まり（クロッグ）</div><div class="tr-body">フィラメントが出ない・エクストルーダー過負荷エラーが出る場合。手動押し出しを試してノズル側か確認してください。<br><a href="https://wiki.bambulab.com/en/p2s/troubleshooting/clogging" class="tlink" target="_blank">→ 公式ノズル詰まりガイド（Bambu Lab）</a></div></div>
+        <div class="tr-item"><div class="tr-title">ファーストレイヤーが定着しない</div><div class="tr-body">プレートをアルコールで清掃してベッド自動キャリブレーションを再実行してください。<br><a href="https://wiki.bambulab.com/en/p2s/troubleshooting/first-layer-printing-optimization-guide" class="tlink" target="_blank">→ 公式ファーストレイヤーガイド（Bambu Lab）</a></div></div>
+        <div class="tr-item"><div class="tr-title">ホットエンド周りのフィラメント塊（ブロブ）</div><div class="tr-body">電源を落として冷却確認後、230℃でPLAを軟化させてから除去（高温注意）。<br><a href="https://wiki.bambulab.com/en/p2s/troubleshooting/hotend_blob" class="tlink" target="_blank">→ 公式ブロブ除去ガイド（Bambu Lab）</a></div></div>
+        <div class="tr-item"><div class="tr-title">電源を入れても画面が点かない</div><div class="tr-body">電源スイッチのLEDパターンを確認。詳細は公式ガイドを参照してください。<br><a href="https://wiki.bambulab.com/en/p2s/p2s-circuit-fault-template" class="tlink" target="_blank">→ 公式回路故障ガイド（Bambu Lab）</a><br><div style="margin-top:8px"><button class="btn btn-sm" style="border-color:var(--red);color:var(--red)" onclick="sendTroubleReport('nores')">先生・佐竹に報告する</button></div></div></div>
+      </div>
+      <div id="tr-k1c" style="display:none">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">出典: <a href="https://wiki.creality.com/en/k1-flagship-series/k1c" class="tlink" target="_blank">Creality 公式Wiki（K1C）</a></div>
+        <div class="tr-item"><div class="tr-title">フィラメント詰まり・送り不良</div><div class="tr-body">エクストルーダーハンドルを開いてフィラメントを取り出し「Auto Feed」で再試行。付属プローブで残留物を押し出す方法も有効。<br><a href="https://wiki.creality.com/en/k1-flagship-series/k1c/troubleshooting/filament-clogging" class="tlink" target="_blank">→ 公式フィラメント詰まりガイド（Creality）</a></div></div>
+        <div class="tr-item"><div class="tr-title">エラーコード 109 / 111</div><div class="tr-body">ヒーター・センサー系エラー。電源を落として再起動を試してください。解決しない場合は下のボタンで先生と佐竹に報告してください。<br><a href="https://wiki.creality.com/en/k1-flagship-series/k1c" class="tlink" target="_blank">→ 公式エラーコード一覧（Creality）</a><br><div style="margin-top:8px"><button class="btn btn-sm" style="border-color:var(--red);color:var(--red)" onclick="sendTroubleReport('nores')">先生・佐竹に報告する</button></div></div></div>
+        <div class="tr-item"><div class="tr-title">カメラが認識されない</div><div class="tr-body">カメラのUSBケーブルを抜き差し。ファームウェアを最新版に更新。解決しない場合は先生へ。<br><a href="https://wiki.creality.com/en/k1-flagship-series/k1c" class="tlink" target="_blank">→ 公式カメラ非認識ガイド（Creality）</a></div></div>
+        <div class="tr-item"><div class="tr-title">Z軸の異音・ベルト弛み</div><div class="tr-body">Z軸ベルトの張力調整が必要です。公式ガイドを参照してください。<br><a href="https://wiki.creality.com/en/k1-flagship-series/k1c" class="tlink" target="_blank">→ 公式ベルト調整ガイド（Creality）</a></div></div>
+      </div>
+      <div id="tr-gen" style="display:none">
+        <div class="tr-item" style="border-left-color:var(--red)">
+          <div class="tr-title">🚨 異臭・煙が出た場合（緊急）</div>
+          <div class="tr-body">
+            <strong>直ちに印刷を停止して電源を切り、窓を開けて換気してください。</strong><br>
+            その後、下のボタンから<strong>先生と佐竹の両方に</strong>すぐ報告してください。
+            <div style="margin-top:10px">
+              <button class="btn btn-danger btn-sm" onclick="sendTroubleReport('smoke')">🚨 緊急報告メールを送る（先生・佐竹両方へ）</button>
+            </div>
+          </div>
+        </div>
+        <div class="tr-item">
+          <div class="tr-title">プリンターが応答しない</div>
+          <div class="tr-body">電源ケーブルの接続を確認後、30秒待ってから再起動。自己判断でケースを開けず先生と佐竹へ報告してください。
+            <div style="margin-top:8px">
+              <button class="btn btn-sm" style="border-color:var(--red);color:var(--red)" onclick="sendTroubleReport('nores')">報告メールを送る（先生・佐竹両方へ）</button>
+            </div>
+          </div>
+        </div>
+        <div class="tr-item">
+          <div class="tr-title">印刷品質が悪い（層ずれ・穴・粗い表面）</div>
+          <div class="tr-body">スライサーの設定（レイヤー厚・温度・速度）を確認してください。フィラメントの吸湿も原因になります。解決しない場合は下のボタンで相談してください。
+            <div style="margin-top:8px">
+              <button class="btn btn-sm" onclick="sendTroubleReport('quality')">相談メールを送る（先生・佐竹両方へ）</button>
+            </div>
+          </div>
+        </div>
+        <div class="tr-item">
+          <div class="tr-title">どうしても解決しない場合</div>
+          <div class="tr-body">「質問」タブから3D佐竹に相談するか、下のボタンから先生と佐竹の両方に直接メールを送ってください。エラーコードと状況を具体的に書いてください。
+            <div style="margin-top:8px">
+              <button class="btn btn-sm" onclick="sendTroubleReport('other')">相談メールを送る（先生・佐竹両方へ）</button>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding:10px 14px;background:var(--blue-l);border-radius:var(--radius);font-size:12px;color:var(--blue-d)">
+          <strong>📧 報告先：</strong>石川真尚先生（ishikawa.m@spc.ritsumei.ac.jp）＋ 3D佐竹（s2410062@spc.ritsumei.ac.jp）<br>
+          <span style="font-size:11px;color:var(--text3)">上のボタンを使うと両方に自動でメールが送信されます</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FLOW ===== -->
+    <div id="panel-flow" class="panel">
+      <div class="card">
+        <div class="card-title">利用フロー</div>
+        <div class="tabs" style="margin-bottom:10px">
+          <button class="tab active" onclick="flowTab('hs',this)">高校生</button>
+          <button class="tab" onclick="flowTab('jhs',this)">中学生</button>
+          <button class="tab" onclick="flowTab('teacher',this)">教員</button>
+        </div>
+        <div id="flow-hs">
+          <div class="notice notice-info" style="font-size:12px">高校生（A〜J組・1〜3年）の利用フロー</div>
+          <div class="flow-box"><div class="flow-who fw-hs">① 生徒</div><div class="flow-text">システムで予約を申請（最大1か月先まで。開始時刻＋所要時間（分）を入力）</div></div>
+          <div class="flow-box"><div class="flow-who fw-ishi">② 石川真尚先生（高2・3D承認責任者）</div><div class="flow-text">使用の最終確認・システムで承認 → 予約確定</div></div>
+          <div class="flow-box"><div class="flow-who fw-sat">③ 3D佐竹（サポート担当・管理者）</div><div class="flow-text">使い方の説明・サポート。<span style="color:var(--red);font-weight:700">初回は特に説明が多いため、時間にゆとりを持つこと。</span></div></div>
+          <div class="flow-box"><div class="flow-who fw-hs">④ 生徒</div><div class="flow-text">時間になるとシステムが自動で「使用中」に変更。印刷を実行・見守り</div></div>
+          <div class="flow-box"><div class="flow-who fw-hs">⑤ 生徒</div><div class="flow-text">印刷完了後、後片付け・「自分の予約」から完了ボタンを押して終了</div></div>
+        </div>
+        <div id="flow-jhs" style="display:none">
+          <div class="notice notice-warn"><h3>中学生の利用フロー（追加手順あり）</h3><ul><li>通常の高校生フローに加え、事前に理科の先生と石川先生の確認が必要です</li></ul></div>
+          <div class="flow-box" style="border-left:3px solid var(--orange);border-radius:0 var(--radius) var(--radius) 0"><div class="flow-who fw-sci">① 中学生 → 中学理科担当の先生に相談</div><div class="flow-text">使用目的・安全性を確認してもらい、了承を得る</div></div>
+          <div class="flow-box" style="border-left:3px solid var(--purple);border-radius:0 var(--radius) var(--radius) 0"><div class="flow-who fw-ishi">② 中学理科の先生と一緒に石川真尚先生（高2）へ確認</div><div class="flow-text">石川先生の承認を取ること（必ず先生と一緒に行くこと）</div></div>
+          <div class="flow-box"><div class="flow-who fw-hs">③ システムで予約を申請</div><div class="flow-text">石川先生がシステム上で承認後、予約確定</div></div>
+          <div class="flow-box"><div class="flow-who fw-sat">④ 3D佐竹（サポート担当）</div><div class="flow-text"><span style="color:var(--red);font-weight:700">初回は特に説明が多いため、時間にゆとりを持つこと。</span>使い方の説明・サポート。</div></div>
+          <div class="flow-box"><div class="flow-who fw-hs">⑤ 生徒（理科の先生が立ち会い）</div><div class="flow-text">印刷実行・見守り</div></div>
+          <div class="flow-box"><div class="flow-who fw-hs">⑥ 生徒</div><div class="flow-text">後片付け・使用記録を入力して終了</div></div>
+        </div>
+        <div id="flow-teacher" style="display:none">
+          <div class="notice notice-info" style="font-size:12px">教員は承認フローなしで予約できます。安全手順は生徒と同様です。</div>
+          <div class="flow-box"><div class="flow-who fw-ishi">① システムで予約を申請（石川先生へ自動通知されます）</div><div class="flow-text">開始時刻＋所要時間（分）を入力</div></div>
+          <div class="flow-box"><div class="flow-who fw-sat">② 3D佐竹（必要に応じてサポート）</div><div class="flow-text">初めて使う場合はサポートを依頼してください</div></div>
+          <div class="flow-box"><div class="flow-who fw-hs">③ 印刷実行・後片付け・記録</div><div class="flow-text">使用記録を「自分の予約」から入力してください</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ADMIN PANEL ===== -->
+    <div id="panel-admin" class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+        <h2 style="font-size:16px;font-weight:700;color:var(--purple)">管理者パネル</h2>
+        <button class="btn btn-sm" onclick="togglePwChange()">パスワード変更</button>
+      </div>
+      <div id="pw-change-wrap" class="pw-change-wrap">
+        <label>新しいパスワード</label>
+        <input type="password" id="new-pw1" placeholder="新しいパスワード">
+        <label>確認（もう一度）</label>
+        <input type="password" id="new-pw2" placeholder="もう一度入力">
+        <div style="margin-top:8px;display:flex;gap:6px">
+          <button class="btn btn-primary btn-sm" onclick="changePw()">変更する</button>
+          <button class="btn btn-sm" onclick="togglePwChange()">キャンセル</button>
+        </div>
+        <div id="pw-msg" style="font-size:12px;margin-top:5px"></div>
+      </div>
+
+      <!-- EmailJS 設定パネル -->
+      <div id="ejs-config-wrap" style="margin-top:8px;padding:12px 14px;background:var(--blue-l);border:1px solid #9FBDE8;border-radius:var(--radius);font-size:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-weight:700;color:var(--blue-d)">📧 EmailJS 自動送信設定</span>
+          <span id="ejs-status-badge" style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--orange-l);color:var(--orange);font-weight:600">未設定</span>
+        </div>
+        <div id="ejs-setup-form">
+          <div style="color:var(--blue-d);margin-bottom:8px;line-height:1.7">
+            <a href="https://www.emailjs.com/" target="_blank" style="color:var(--blue);font-weight:600">EmailJS</a> の無料アカウントを作成し、以下の3つのIDを入力してください。<br>
+            設定方法は <strong>下の「設定手順を見る」</strong> を参照してください。
+          </div>
+          <div class="row2">
+            <div>
+              <label style="margin-top:0">Public Key（公開鍵）</label>
+              <input type="text" id="ejs-pubkey" placeholder="例：aBcDeFgHiJkLmNoPq">
+            </div>
+            <div>
+              <label style="margin-top:0">Service ID</label>
+              <input type="text" id="ejs-svcid" placeholder="例：service_xxxxxxx">
+            </div>
+          </div>
+          <label>Template ID</label>
+          <input type="text" id="ejs-tmplid" placeholder="例：template_xxxxxxx">
+          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" onclick="saveEjsConfig()">保存して有効化</button>
+            <button class="btn btn-sm" onclick="testEjsMail()">テスト送信</button>
+            <button class="btn btn-sm" onclick="toggleEjsHelp()">設定手順を見る ▾</button>
+          </div>
+          <div id="ejs-msg" style="font-size:12px;margin-top:6px"></div>
+        </div>
+
+        <div id="ejs-help" style="display:none;margin-top:10px;padding:10px;background:#fff;border-radius:var(--radius);border:1px solid #9FBDE8;line-height:1.85;color:var(--text)">
+          <div style="font-weight:700;margin-bottom:6px;color:var(--blue-d)">📋 EmailJS 設定手順</div>
+          <ol style="padding-left:18px;font-size:12px">
+            <li><a href="https://www.emailjs.com/" target="_blank" style="color:var(--blue)">emailjs.com</a> で無料アカウントを作成（月200通まで無料）</li>
+            <li>「Email Services」→「Add New Service」→ Gmailなどを接続 → <strong>Service ID</strong> をコピー</li>
+            <li>「Email Templates」→「Create New Template」→ 以下の変数を使ったテンプレートを作成：<br>
+              <div style="background:var(--bg3);padding:6px 10px;border-radius:5px;margin:5px 0;font-family:var(--mono);font-size:11px">
+                To: <strong>{{to_email}}</strong><br>
+                CC: <strong>{{cc_email}}</strong>（任意）<br>
+                Subject: <strong>{{subject}}</strong><br>
+                Body: <strong>{{body}}</strong>
+              </div>
+              → 保存して <strong>Template ID</strong> をコピー
+            </li>
+            <li>「Account」→「General」→ <strong>Public Key</strong> をコピー</li>
+            <li>上の入力欄に3つのIDを貼り付けて「保存して有効化」を押す</li>
+          </ol>
+          <div style="margin-top:6px;padding:6px 10px;background:var(--green-l);border-radius:5px;font-size:11px;color:var(--green)">
+            ✅ 設定完了後は予約申請・承認・質問投稿・回答のたびに自動でメールが送信されます
+          </div>
+        </div>
+
+        <div id="ejs-active-info" style="display:none;color:var(--green);font-size:12px;margin-top:4px">
+          ✅ 自動送信が有効です。<button class="btn btn-xs btn-sm" style="margin-left:8px" onclick="resetEjsConfig()">設定を変更</button>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="adminTab('reservations',this)">予約管理</button>
+        <button class="tab" id="admin-tab-qa" onclick="adminTab('questions',this)">質問対応 <span id="qa-badge-cnt" style="display:none;background:var(--red);color:#fff;border-radius:10px;font-size:10px;padding:0 5px;margin-left:3px"></span></button>
+        <button class="tab" id="admin-tab-ishi" style="display:none" onclick="adminTab('approve',this)">承認待ち <span id="approve-badge-cnt" style="display:none;background:var(--orange);color:#fff;border-radius:10px;font-size:10px;padding:0 5px;margin-left:3px"></span></button>
+      </div>
+
+      <div id="admin-reservations">
+        <div class="admin-section">
+          <div class="admin-section-title">全予約一覧</div>
+          <div id="admin-res-list"></div>
+        </div>
+      </div>
+
+      <div id="admin-questions" style="display:none">
+        <div class="admin-section">
+          <div class="admin-section-title">質問一覧（回答待ち優先）</div>
+          <div id="admin-q-list"></div>
+        </div>
+      </div>
+
+      <div id="admin-approve" style="display:none">
+        <div class="admin-section">
+          <div class="admin-section-title">承認待ち予約（石川先生専用）</div>
+          <div id="admin-approve-list"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ===== CONSTANTS =====
+var SATAKE_MAIL = 's2410062@spc.ritsumei.ac.jp';
+var ISHIKAWA_MAIL = 'ishikawa.m@spc.ritsumei.ac.jp';
+
+// ===== EmailJS 設定 =====
+var EJS = { pubkey: '', svcid: '', tmplid: '', ready: false };
+
+function loadEjsConfig() {
+  try {
+    var c = localStorage.getItem('3dp_ejs');
+    if (c) {
+      EJS = JSON.parse(c);
+      if (EJS.pubkey && EJS.svcid && EJS.tmplid) {
+        emailjs.init(EJS.pubkey);
+        EJS.ready = true;
+      }
+    }
+  } catch(e) {}
+}
+
+function saveEjsConfig() {
+  var pk = document.getElementById('ejs-pubkey').value.trim();
+  var sv = document.getElementById('ejs-svcid').value.trim();
+  var tm = document.getElementById('ejs-tmplid').value.trim();
+  var msg = document.getElementById('ejs-msg');
+  if (!pk || !sv || !tm) { msg.style.color='var(--red)'; msg.textContent='3つすべて入力してください'; return; }
+  EJS = { pubkey: pk, svcid: sv, tmplid: tm, ready: true };
+  try { emailjs.init(pk); } catch(e) {}
+  localStorage.setItem('3dp_ejs', JSON.stringify(EJS));
+  msg.style.color='var(--green)'; msg.textContent='✅ 保存しました。テスト送信で確認してください。';
+  refreshEjsUI();
+}
+
+function resetEjsConfig() {
+  document.getElementById('ejs-active-info').style.display='none';
+  document.getElementById('ejs-setup-form').style.display='';
+  document.getElementById('ejs-pubkey').value = EJS.pubkey;
+  document.getElementById('ejs-svcid').value = EJS.svcid;
+  document.getElementById('ejs-tmplid').value = EJS.tmplid;
+}
+
+function refreshEjsUI() {
+  var badge = document.getElementById('ejs-status-badge');
+  var activeInfo = document.getElementById('ejs-active-info');
+  var setupForm = document.getElementById('ejs-setup-form');
+  if (!badge) return;
+  if (EJS.ready) {
+    badge.style.background='var(--green-l)'; badge.style.color='var(--green)'; badge.textContent='✅ 有効';
+    activeInfo.style.display='';
+    setupForm.style.display='none';
+  } else {
+    badge.style.background='var(--orange-l)'; badge.style.color='var(--orange)'; badge.textContent='未設定';
+    activeInfo.style.display='none';
+    setupForm.style.display='';
+  }
+}
+
+function toggleEjsHelp() {
+  var h = document.getElementById('ejs-help');
+  h.style.display = h.style.display === 'none' ? '' : 'none';
+}
+
+function testEjsMail() {
+  var msg = document.getElementById('ejs-msg');
+  if (!EJS.ready) { msg.style.color='var(--red)'; msg.textContent='先に保存してください'; return; }
+  msg.style.color='var(--blue)'; msg.textContent='送信中…';
+  emailjs.send(EJS.svcid, EJS.tmplid, {
+    to_email: CU.email || SATAKE_MAIL,
+    cc_email: '',
+    subject: '【3Dプリンター】EmailJS テスト送信',
+    body: 'EmailJS の設定が正常に完了しています。\n送信者：' + (CU.name || '管理者') + '\n\nこのメールは自動送信テストです。'
+  }).then(function() {
+    msg.style.color='var(--green)'; msg.textContent='✅ テストメールを送信しました！受信トレイを確認してください。';
+  }).catch(function(err) {
+    msg.style.color='var(--red)'; msg.textContent='❌ 送信失敗：' + (err.text || JSON.stringify(err)) + '　IDを確認してください。';
+  });
+}
+
+/**
+ * メール送信の共通関数
+ * EmailJS が有効なら自動送信、無効なら mailto フォールバック
+ */
+function sendMail(to, cc, subject, body, onSuccess) {
+  if (EJS.ready) {
+    emailjs.send(EJS.svcid, EJS.tmplid, {
+      to_email: to,
+      cc_email: cc || '',
+      subject: subject,
+      body: body
+    }).then(function() {
+      if (onSuccess) onSuccess(true);
+    }).catch(function(err) {
+      console.error('EmailJS error:', err);
+      // 失敗時はmailtoにフォールバック
+      openMailto(to, cc, subject, body);
+      if (onSuccess) onSuccess(false);
+    });
+  } else {
+    openMailto(to, cc, subject, body);
+    if (onSuccess) onSuccess(false);
+  }
+}
+
+function openMailto(to, cc, subject, body) {
+  var url = 'mailto:' + to
+    + (cc ? '?cc=' + encodeURIComponent(cc) : '?')
+    + '&subject=' + encodeURIComponent(subject)
+    + '&body=' + encodeURIComponent(body);
+  window.location.href = url;
+}
+
+/** ① 予約申請 → 管理者2名へ送信 */
+function emailAdminsNewReservation(r) {
+  var pn = r.printer === 'k1c' ? 'K1C（機体①）' : 'P2S（機体②）';
+  var subject = '【3Dプリンター】新規予約申請 (' + r.grade + ' ' + r.cls + ' ' + r.user + ')';
+  var body =
+    '3Dプリンター管理システムに新しい予約申請が届きました。\n\n' +
+    '━━━ 予約情報 ━━━\n' +
+    '氏名：' + r.grade + ' ' + r.cls + ' ' + r.user + '\n' +
+    '返信先：' + r.email + '\n' +
+    '機体：' + pn + '\n' +
+    '日時：' + r.date + ' ' + r.time + '〜 ' + r.dur + '分\n' +
+    '目的：' + r.purpose + '\n' +
+    '詳細：' + r.detail + '\n' +
+    'フィラメント：' + r.fil + '\n\n' +
+    '管理者アプリの「承認待ち」タブから承認してください。\n' +
+    '承認するとシステムが自動で予約者にメールを送ります。';
+  sendMail(SATAKE_MAIL, ISHIKAWA_MAIL, subject, body, function(auto) {
+    var el = document.getElementById('r-msg');
+    if (el) {
+      el.style.color = 'var(--green)';
+      el.textContent = auto
+        ? '✅ 予約を保存し、管理者へ自動メールを送信しました。'
+        : '予約を保存しました。Outlookが開くので送信ボタンを押してください。';
+    }
+  });
+}
+
+/** ② 予約承認 → 予約者へ送信 */
+function emailUserReservationApproved(r) {
+  var pn = r.printer === 'k1c' ? 'K1C（機体①）' : 'P2S（機体②）';
+  var subject = '【3Dプリンター】予約が承認されました';
+  var body =
+    r.user + ' さん\n\n' +
+    '3Dプリンターの予約が承認されました。\n\n' +
+    '━━━ 予約詳細 ━━━\n' +
+    '機体：' + pn + '\n' +
+    '日時：' + r.date + ' ' + r.time + '〜 ' + r.dur + '分\n' +
+    '目的：' + r.purpose + '\n\n' +
+    '当日の時間になるとシステムが自動で「使用中」に変更します。\n' +
+    '利用後は「自分の予約」タブから完了ボタンを押してください。';
+  sendMail(r.email, SATAKE_MAIL + ',' + ISHIKAWA_MAIL, subject, body);
+}
+
+/** ③ 質問投稿 → 管理者2名へ送信 */
+function emailAdminsNewQuestion(q) {
+  var subject = '【3Dプリンター質問】' + q.grade + (q.cls ? ' ' + q.cls : '') + ' ' + q.user;
+  var body =
+    '3Dプリンター管理システムに新しい質問が届きました。\n\n' +
+    '━━━ 質問者情報 ━━━\n' +
+    '氏名：' + q.grade + (q.cls ? ' ' + q.cls : '') + ' ' + q.user + '\n' +
+    '返信先：' + q.email + '\n' +
+    'カテゴリ：' + q.cat + '\n\n' +
+    '━━━ 質問内容 ━━━\n' + q.text + '\n\n' +
+    '管理者アプリの「質問対応」タブから回答すると質問者に自動でメールが届きます。';
+  sendMail(SATAKE_MAIL, ISHIKAWA_MAIL, subject, body, function(auto) {
+    var el = document.getElementById('q-msg');
+    if (el) {
+      el.style.color = 'var(--green)';
+      el.textContent = auto
+        ? '✅ 質問を保存し、管理者へ自動メールを送信しました。'
+        : '質問を保存しました。Outlookが開くので送信ボタンを押してください。';
+    }
+  });
+}
+
+/** ④ 質問回答 → 質問者へ送信 */
+function emailUserQuestionAnswered(q, answerText, answererName) {
+  var subject = '【3Dプリンター】あなたの質問に回答が届きました';
+  var body =
+    q.user + ' さん\n\n' +
+    '質問への回答が届きました。\n\n' +
+    '━━━ 質問内容 ━━━\n' + q.text + '\n\n' +
+    '━━━ 回答（' + answererName + '）━━━\n' + answerText + '\n\n' +
+    '引き続き不明な点があればアプリの「質問」タブからご連絡ください。';
+  sendMail(q.email, SATAKE_MAIL + ',' + ISHIKAWA_MAIL, subject, body);
+}
+var MN = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+var calY, calM, selDate = null;
+var CU = {name:'',grade:'',cls:'',type:'',email:'',isFirst:false,isAdmin:false,adminRole:''};
+
+// ===== 生徒判定: s + 数字7桁 (ドメイン不問) =====
+function isStudentId(email) {
+  return /^s\d{7}(@|$)/.test(email.split('@')[0]+'@');
+}
+
+// ===== localStorage 永続化データ =====
+var SEED_RES = [
+  {id:1,user:'佐藤花子',grade:'高校2年',cls:'C組',printer:'p2s',date:'2026-05-24',time:'14:30',dur:90,purpose:'授業・課題',detail:'実験パーツ（直径20mm円筒）',fil:'PLA（標準）',status:'approved',type:'hs',email:'hanako.sato@spc.ritsumei.ac.jp'},
+  {id:2,user:'田中一郎',grade:'中学3年',cls:'2組',printer:'k1c',date:'2026-05-25',time:'15:30',dur:60,purpose:'自由研究',detail:'昆虫標本ケース',fil:'PLA（標準）',status:'pending',type:'jhs',email:'s2340056@spc.ritsumei.ac.jp'},
+  {id:3,user:'鈴木次郎',grade:'高校1年',cls:'A組',printer:'p2s',date:'2026-05-26',time:'16:00',dur:120,purpose:'部活',detail:'ロボットフレームパーツ',fil:'PETG',status:'approved',type:'hs',email:'s2310033@spc.ritsumei.ac.jp'}
+];
+var SEED_QS = [
+  {id:1,user:'高橋三郎',grade:'高校2年',cls:'B組',email:'t.saburo@spc.ritsumei.ac.jp',cat:'印刷品質の改善',text:'P2Sで表面がザラザラになります。設定を教えてください。',ans:'レイヤー厚を0.1mmに変更してみてください。Bambu Studioの「クオリティ」プリセットも試してください。',ansBy:'3D佐竹',ansType:'admin',time:'2026-04-22 15:00'}
+];
+
+function loadData() {
+  try {
+    var r = localStorage.getItem('3dp_res');
+    var q = localStorage.getItem('3dp_qs');
+    var p = localStorage.getItem('3dp_pw');
+    var c = localStorage.getItem('3dp_counters');
+    RES = r ? JSON.parse(r) : JSON.parse(JSON.stringify(SEED_RES));
+    QS  = q ? JSON.parse(q) : JSON.parse(JSON.stringify(SEED_QS));
+    ADMIN_PASSWORDS = p ? JSON.parse(p) : {satake:'satake2026', ishikawa:'ishi2026'};
+    var cnt = c ? JSON.parse(c) : {rid:20, qid:10};
+    rid = cnt.rid; qid = cnt.qid;
+  } catch(e) {
+    RES = JSON.parse(JSON.stringify(SEED_RES));
+    QS  = JSON.parse(JSON.stringify(SEED_QS));
+    ADMIN_PASSWORDS = {satake:'satake2026', ishikawa:'ishi2026'};
+    rid = 20; qid = 10;
+  }
+}
+function saveData() {
+  try {
+    localStorage.setItem('3dp_res', JSON.stringify(RES));
+    localStorage.setItem('3dp_qs',  JSON.stringify(QS));
+    localStorage.setItem('3dp_pw',  JSON.stringify(ADMIN_PASSWORDS));
+    localStorage.setItem('3dp_counters', JSON.stringify({rid:rid, qid:qid}));
+  } catch(e) {}
+}
+
+// グローバル変数（loadData()で初期化）
+var RES, QS, ADMIN_PASSWORDS, rid, qid;
+loadData();
+loadEjsConfig();
+
+// 別タブ/別ウィンドウのデータ変更を検知して自動同期
+window.addEventListener('storage', function(e) {
+  if (e.key && e.key.startsWith('3dp_')) {
+    loadData();
+    // ログイン済みなら画面を再描画
+    if (CU.name) {
+      autoUpdateStatus();
+      renderCalendar();
+      renderMyRes();
+      if(selDate) renderDayRes(selDate);
+      renderPrinterStatus();
+      updateStats();
+      updateAdminBadges();
+      if (CU.isAdmin) { renderAdminRes(); renderAdminQ(); renderAdminApprove(); }
+    }
+  }
+});
+
+// ===== AUTO STATUS UPDATE =====
+function autoUpdateStatus() {
+  var now = new Date();
+  RES.forEach(function(r) {
+    if (r.status === 'approved') {
+      var start = new Date(r.date + 'T' + r.time);
+      var end = new Date(start.getTime() + r.dur * 60000);
+      if (now >= start && now < end) {
+        r.status = 'using';
+      } else if (now >= end && r.status === 'using') {
+        r.status = 'done';
+      }
+    }
+    if (r.status === 'using') {
+      var start = new Date(r.date + 'T' + r.time);
+      var end = new Date(start.getTime() + r.dur * 60000);
+      if (now >= end) r.status = 'done';
+    }
+  });
+}
+setInterval(function(){ autoUpdateStatus(); renderPrinterStatus(); renderCalendar(); updateStats(); }, 30000);
+autoUpdateStatus();
+
+// ===== LOGIN =====
+function showAdminLogin(){ document.getElementById('login-user-form').style.display='none'; document.getElementById('login-admin-form').style.display=''; }
+function showUserLogin(){ document.getElementById('login-admin-form').style.display='none'; document.getElementById('login-user-form').style.display=''; }
+
+// MS login email hint
+var lgDetectedType = '';
+function lgEmailHint(){
+  var email = document.getElementById('lg-email').value.trim();
+  var hint = document.getElementById('lg-email-hint');
+  if (!email || !email.includes('@')) { hint.textContent=''; return; }
+  if (isStudentId(email)) {
+    hint.style.color='var(--green)';
+    hint.textContent='✓ 生徒アカウントとして認識されます（s+数字7桁）';
+  } else {
+    hint.style.color='var(--blue)';
+    hint.textContent='✓ 教員アカウントとして認識されます';
+  }
+}
+
+function doMsAuth(){
+  var email = document.getElementById('lg-email').value.trim();
+  var err = document.getElementById('lg-err');
+  if (!email){ err.textContent='メールアドレスを入力してください'; return; }
+  if (!email.includes('@')){ err.textContent='正しいメールアドレスを入力してください'; return; }
+  err.textContent='';
+  if (isStudentId(email)) {
+    lgDetectedType = 'student';
+    document.getElementById('lg-detected-type').textContent = '✓ 生徒アカウントで認証されました（学年・組を選択してください）';
+    document.getElementById('lg-student-block').style.display = '';
+    document.getElementById('lg-teacher-block').style.display = 'none';
+  } else {
+    lgDetectedType = 'teacher';
+    document.getElementById('lg-detected-type').textContent = '✓ 教員アカウントで認証されました';
+    document.getElementById('lg-student-block').style.display = 'none';
+    document.getElementById('lg-teacher-block').style.display = '';
+  }
+  document.getElementById('lg-step1').style.display = 'none';
+  document.getElementById('lg-step2').style.display = '';
+}
+
+function lgGradeClsChange(){
+  var val = document.getElementById('lg-grade-cls').value;
+  var warn = document.getElementById('lg-jhs-warn');
+  if (warn) warn.style.display = (val && val.startsWith('jhs')) ? '' : 'none';
+}
+
+function lgBack(){
+  document.getElementById('lg-step2').style.display = 'none';
+  document.getElementById('lg-step1').style.display = '';
+}
+
+function lgTypeChange(){ /* legacy no-op */ }
+
+function doLogin(){
+  var name = document.getElementById('lg-name').value.trim();
+  var email = document.getElementById('lg-email').value.trim();
+  var err = document.getElementById('lg-err2');
+  if (!name){ err.textContent='氏名を入力してください'; return; }
+  var grade='', cls='', t='';
+  if (lgDetectedType === 'student'){
+    var val = document.getElementById('lg-grade-cls').value;
+    if (!val){ err.textContent='学年・組を選択してください'; return; }
+    var parts = val.split('|'); // "jhs|中学1年|1組"
+    t = parts[0]; grade = parts[1]; cls = parts[2];
+  } else {
+    t = 'teacher';
+    var tc = document.getElementById('tc').value;
+    if (!tc){ err.textContent='担当・役職を選択してください'; return; }
+    grade = tc; cls = '';
+  }
+  loadData(); // 最新データを読み込んでからisFirstを判定
+  var myRes = RES.filter(function(r){return r.email===email;});
+  CU = {name:name,grade:grade,cls:cls,type:t,email:email,isFirst:myRes.length===0,isAdmin:false,adminRole:''};
+  startApp();
+}
+
+function doAdminLogin(){
+  loadData(); // 最新パスワードを取得
+  var adminId = document.getElementById('admin-user').value;
+  var pw = document.getElementById('admin-pw').value;
+  var err = document.getElementById('admin-err');
+  if (!adminId){err.textContent='管理者名を選択してください';return;}
+  if (!pw){err.textContent='パスワードを入力してください';return;}
+  if (ADMIN_PASSWORDS[adminId] !== pw){err.textContent='パスワードが正しくありません';return;}
+  var names = {satake:'3D佐竹', ishikawa:'石川真尚先生'};
+  var emails = {satake:SATAKE_MAIL, ishikawa:ISHIKAWA_MAIL};
+  CU = {name:names[adminId],grade:'',cls:'',type:'admin',email:emails[adminId],isFirst:false,isAdmin:true,adminRole:adminId};
+  startApp();
+}
+
+function startApp(){
+  loadData(); // 必ず最新データを読み込む
+  document.getElementById('login-wrap').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  var disp = CU.grade ? (CU.grade+(CU.cls?' '+CU.cls+' ':' ')+CU.name) : CU.name;
+  document.getElementById('user-disp').textContent = disp;
+  document.getElementById('user-av').textContent = CU.name.slice(0,1);
+  // Reset role badge
+  document.getElementById('role-badge').textContent = CU.type==='jhs'?'中学生':CU.type==='hs'?'高校生':CU.type==='teacher'?'教員':'生徒';
+  document.getElementById('role-badge').className = 'topbar-badge tb-user';
+  document.getElementById('admin-tab-ishi').style.display='none';
+  document.getElementById('nav-admin').style.display='none';
+  if (CU.isAdmin) {
+    document.getElementById('role-badge').textContent = CU.adminRole==='satake'?'管理者（佐竹）':'管理者（石川）';
+    document.getElementById('role-badge').className = 'topbar-badge tb-admin';
+    document.getElementById('nav-admin').style.display = '';
+    if (CU.adminRole === 'ishikawa') {
+      document.getElementById('admin-tab-ishi').style.display = '';
+      // Auto-switch to approve tab for ishikawa
+      adminTab('approve', document.querySelector('#panel-admin .tab:nth-child(3)'));
+    }
+  }
+  if (CU.type==='jhs'){
+    document.getElementById('jhs-rule-box').style.display='';
+  } else {
+    document.getElementById('jhs-rule-box').style.display='none';
+  }
+  if (CU.isFirst && !CU.isAdmin){
+    document.getElementById('first-notice').style.display='';
+    document.getElementById('jhs-first-msg').style.display = CU.type==='jhs'?'':'none';
+  } else {
+    document.getElementById('first-notice').style.display='none';
+  }
+  // Reset nav to home
+  showPanel('home', document.querySelector('.nav-btn'));
+  var today = new Date();
+  calY = today.getFullYear(); calM = today.getMonth();
+  document.getElementById('r-date').value = today.toISOString().split('T')[0];
+  autoUpdateStatus();
+  renderCalendar();
+  renderMyRes();
+  renderQList();
+  renderPrinterStatus();
+  updateStats();
+  updateAdminBadges();
+}
+
+function doLogout(){
+  document.getElementById('login-wrap').style.display='flex';
+  document.getElementById('main-app').style.display='none';
+  document.getElementById('lg-name').value='';
+  document.getElementById('lg-email').value='';
+  document.getElementById('lg-step1').style.display='';
+  document.getElementById('lg-step2').style.display='none';
+  document.getElementById('admin-pw').value='';
+  document.getElementById('admin-err').textContent='';
+  document.getElementById('lg-err').textContent='';
+  document.getElementById('lg-email-hint').textContent='';
+  document.getElementById('nav-admin').style.display='none';
+  lgDetectedType='';
+  CU={name:'',grade:'',cls:'',type:'',email:'',isFirst:false,isAdmin:false,adminRole:''};
+  showUserLogin();
+}
+
+// ===== NAVIGATION =====
+function showPanel(id,btn){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('panel-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id==='admin'){ renderAdminRes(); renderAdminQ(); renderAdminApprove(); refreshEjsUI(); }
+}
+
+// ===== STATS =====
+function updateStats(){
+  var today = new Date().toISOString().split('T')[0];
+  document.getElementById('stat-today').textContent = RES.filter(function(r){return r.date===today;}).length;
+  document.getElementById('my-count').textContent = RES.filter(function(r){return r.user===CU.name;}).length;
+  var unanswered = QS.filter(function(q){return !q.ans;}).length;
+  document.getElementById('stat-q').textContent = unanswered;
+}
+
+function updateAdminBadges(){
+  var pending = QS.filter(function(q){return !q.ans;}).length;
+  var qbadge = document.getElementById('qa-badge-cnt');
+  if (pending>0){qbadge.textContent=pending;qbadge.style.display='';}else{qbadge.style.display='none';}
+  var awaitApprove = RES.filter(function(r){return r.status==='pending';}).length;
+  var abadge = document.getElementById('approve-badge-cnt');
+  if (abadge){if(awaitApprove>0){abadge.textContent=awaitApprove;abadge.style.display='';}else{abadge.style.display='none';}}
+  var alertDot = document.getElementById('admin-alert-dot');
+  if (alertDot) alertDot.style.display = (pending>0||awaitApprove>0)?'':'none';
+}
+
+// ===== PRINTER STATUS =====
+function renderPrinterStatus(){
+  var el = document.getElementById('printer-status-home');
+  if (!el) return;
+  var printers = [{id:'p2s',name:'Bambu Lab P2S（機体②）'},{id:'k1c',name:'Creality K1C（機体①）'}];
+  el.innerHTML = '';
+  printers.forEach(function(p){
+    var now = new Date();
+    var usingRes = RES.find(function(r){return r.printer===p.id&&r.status==='using';});
+    var nextRes = RES.filter(function(r){return r.printer===p.id&&r.status==='approved'&&r.date>=now.toISOString().split('T')[0];}).sort(function(a,b){return (a.date+a.time).localeCompare(b.date+b.time);})[0];
+    var div = document.createElement('div');
+    div.className = 'pstatus';
+    var dot,info,badge;
+    if (usingRes){
+      dot='<div class="pdot dot-busy"></div>';
+      var endTime = new Date(new Date(usingRes.date+'T'+usingRes.time).getTime()+usingRes.dur*60000);
+      var rem = Math.max(0,Math.round((endTime-now)/60000));
+      info = usingRes.grade+' '+usingRes.cls+' '+usingRes.user+' / 残り約'+rem+'分';
+      badge='<span class="badge b-using">使用中</span>';
+    } else if (nextRes){
+      dot='<div class="pdot dot-soon"></div>';
+      info='空き / '+nextRes.date+' '+nextRes.time+'〜 予約あり';
+      badge='<span class="badge b-pending">空き</span>';
+    } else {
+      dot='<div class="pdot dot-free"></div>';
+      info='空き / 予約なし';
+      badge='<span class="badge b-approved">空き</span>';
+    }
+    div.innerHTML=dot+'<div class="pname">'+p.name+'</div><div class="pinfo">'+info+'</div>'+badge;
+    el.appendChild(div);
+  });
+}
+
+// ===== CALENDAR =====
+function calNav(d){
+  calM+=d;
+  if(calM>11){calM=0;calY++;}
+  if(calM<0){calM=11;calY--;}
+  renderCalendar();
+}
+
+function renderCalendar(){
+  document.getElementById('cal-lbl').textContent = calY+'年'+MN[calM];
+  var grid = document.getElementById('cal-grid');
+  grid.querySelectorAll('.cal-day').forEach(function(n){n.remove();});
+  var first = new Date(calY,calM,1).getDay();
+  var days = new Date(calY,calM+1,0).getDate();
+  var today = new Date();
+  var maxD = new Date(); maxD.setMonth(maxD.getMonth()+1);
+  for(var i=0;i<first;i++){var d=document.createElement('div');d.className='cal-day other';grid.appendChild(d);}
+  for(var day=1;day<=days;day++){
+    var d=document.createElement('div');d.className='cal-day';
+    var ds=calY+'-'+String(calM+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    var td=new Date(calY,calM,day);
+    if(td<new Date(today.toDateString()))d.classList.add('past');
+    else if(td>maxD)d.classList.add('toofar');
+    if(td.toDateString()===today.toDateString())d.classList.add('today');
+    if(selDate===ds)d.classList.add('selected');
+    var dn=document.createElement('div');dn.className='cal-dnum';dn.textContent=day;d.appendChild(dn);
+    RES.filter(function(r){return r.date===ds;}).slice(0,2).forEach(function(r){
+      var s=document.createElement('div');
+      var cl=r.status==='using'?'cs-using':(r.printer==='k1c'?'cs-k1c':'cs-p2s');
+      s.className='cal-slot '+cl;
+      s.textContent=r.time+' '+(r.printer==='k1c'?'K1C':'P2S');
+      d.appendChild(s);
+    });
+    var ds2=ds;
+    d.onclick=(function(ds,el){return function(){
+      document.querySelectorAll('.cal-day.selected').forEach(function(x){x.classList.remove('selected');});
+      el.classList.add('selected');selDate=ds;
+      document.getElementById('r-date').value=ds;
+      renderDayRes(ds);
+    };})(ds2,d);
+    grid.appendChild(d);
+  }
+}
+
+function renderDayRes(date){
+  var list=document.getElementById('day-res-list');list.innerHTML='';
+  var dr=RES.filter(function(r){return r.date===date;});
+  if(!dr.length){list.innerHTML='<div class="empty">この日の予約はありません</div>';return;}
+  dr.forEach(function(r){
+    var el=document.createElement('div');
+    var isMine=r.user===CU.name;
+    el.className='res-item'+(r.status==='using'?' using':(r.status==='approved'?' approved':(isMine?' mine':'')));
+    var pn=r.printer==='k1c'?'K1C（機体①）':'P2S（機体②）';
+    var sb=statusBadge(r.status);
+    el.innerHTML='<div class="res-main"><div class="res-name">'+r.grade+(r.cls?' '+r.cls:'')+ ' '+r.user+' '+sb+'</div><div class="res-sub">'+pn+' / '+r.time+'〜 '+r.dur+'分 / '+r.purpose+'</div></div>';
+    if(isMine&&r.status!=='using'&&r.status!=='done'){
+      var btn=document.createElement('button');btn.className='btn btn-danger btn-sm';btn.textContent='削除';
+      btn.onclick=(function(id){return function(){if(confirm('この予約を削除しますか？')){RES=RES.filter(function(x){return x.id!==id;});saveData();renderDayRes(date);renderCalendar();renderMyRes();updateStats();}}})(r.id);
+      el.appendChild(btn);
+    }
+    list.appendChild(el);
+  });
+}
+
+function statusBadge(s){
+  if(s==='using') return '<span class="badge b-using">使用中</span>';
+  if(s==='approved') return '<span class="badge b-approved">承認済</span>';
+  if(s==='pending') return '<span class="badge b-pending">承認待ち</span>';
+  if(s==='done') return '<span class="badge b-done">完了</span>';
+  return '';
+}
+
+// ===== RESERVATION SUBMIT =====
+function submitRes(){
+  var printer=document.getElementById('r-printer').value;
+  var date=document.getElementById('r-date').value;
+  var time=document.getElementById('r-time').value;
+  var dur=parseInt(document.getElementById('r-dur').value)||0;
+  var purpose=document.getElementById('r-purpose').value;
+  var detail=document.getElementById('r-detail').value.trim();
+  var fil=document.getElementById('r-filament').value;
+  var msg=document.getElementById('r-msg');
+  if(!date||!time||!dur||!detail){msg.style.color='var(--red)';msg.textContent='日付・時刻・所要時間・詳細目的を入力してください';return;}
+  if(dur<10){msg.style.color='var(--red)';msg.textContent='所要時間は10分以上で入力してください';return;}
+  var td=new Date();var mx=new Date();mx.setMonth(mx.getMonth()+1);
+  var rd=new Date(date);
+  if(rd<new Date(td.toDateString())){msg.style.color='var(--red)';msg.textContent='過去の日付には予約できません';return;}
+  if(rd>mx){msg.style.color='var(--red)';msg.textContent='予約は最大1か月先までです';return;}
+  // P2S is only 1 unit
+  var sameSlotPrinter=RES.filter(function(r){return r.date===date&&r.printer===printer&&r.status!=='done';});
+  if(sameSlotPrinter.length>=1){msg.style.color='var(--red)';msg.textContent='この機体・日付の予約は既に入っています（'+( printer==='p2s'?'P2Sは1台のみ':'K1Cは1台') +'）';return;}
+  // max 2 printers per day (放課後)
+  var sameDay=RES.filter(function(r){return r.date===date&&r.status!=='done';});
+  if(sameDay.length>=2){msg.style.color='var(--red)';msg.textContent='この日はすでに2台分の予約が入っています（放課後最大2台）';return;}
+  var initStatus = 'pending';
+  var newR={id:++rid,user:CU.name,grade:CU.grade,cls:CU.cls,printer:printer,date:date,time:time,dur:dur,purpose:purpose,detail:detail,fil:fil,status:initStatus,type:CU.type,email:CU.email};
+
+  RES.push(newR);
+  saveData();
+  CU.isFirst=false;
+  document.getElementById('first-notice').style.display='none';
+  // ① 予約申請 → 管理者2名へ送信（EmailJS有効時は自動送信、無効時はmailto）
+  msg.style.color='var(--blue)';
+  msg.textContent = EJS.ready ? '送信中…' : '予約を保存しました。Outlookが開くので送信ボタンを押してください。';
+  emailAdminsNewReservation(newR);
+  renderCalendar();renderMyRes();updateStats();updateAdminBadges();
+  if(selDate)renderDayRes(selDate);
+  setTimeout(function(){msg.textContent='';},6000);
+}
+
+function clearRes(){
+  document.getElementById('r-dur').value='';
+  document.getElementById('r-detail').value='';
+  document.getElementById('r-msg').textContent='';
+}
+
+// ===== MY RESERVATIONS =====
+function renderMyRes(){
+  var list=document.getElementById('my-res-list');list.innerHTML='';
+  var mine=RES.filter(function(r){return r.user===CU.name;});
+  if(!mine.length){list.innerHTML='<div class="empty">予約はまだありません</div>';return;}
+  mine.sort(function(a,b){return (a.date+a.time).localeCompare(b.date+b.time);}).forEach(function(r){
+    var el=document.createElement('div');
+    el.className='res-item'+(r.status==='using'?' using':(r.status==='approved'?' approved':' mine'));
+    var pn=r.printer==='k1c'?'K1C（機体①）':'P2S（機体②）';
+    var sb=statusBadge(r.status);
+    el.innerHTML='<div class="res-main"><div class="res-name">'+pn+' / '+r.date+' '+r.time+'〜 '+r.dur+'分 '+sb+'</div><div class="res-sub">'+r.purpose+' / '+r.detail+' / '+r.fil+'</div></div>';
+    var btnRow=document.createElement('div');btnRow.style.display='flex';btnRow.style.gap='5px';
+    if(r.status==='using'){
+      var doneBtn=document.createElement('button');doneBtn.className='btn btn-green btn-sm';doneBtn.textContent='完了';
+      doneBtn.onclick=(function(id){return function(){if(confirm('印刷完了として記録しますか？')){RES.find(function(x){return x.id===id;}).status='done';saveData();renderMyRes();renderCalendar();updateStats();updateAdminBadges();renderPrinterStatus();}};})(r.id);
+      btnRow.appendChild(doneBtn);
+    }
+    if(r.status!=='using'&&r.status!=='done'){
+      var delBtn=document.createElement('button');delBtn.className='btn btn-danger btn-sm';delBtn.textContent='削除';
+      delBtn.onclick=(function(id){return function(){if(confirm('この予約を削除しますか？')){RES=RES.filter(function(x){return x.id!==id;});saveData();renderMyRes();renderCalendar();updateStats();updateAdminBadges();}}})(r.id);
+      btnRow.appendChild(delBtn);
+    }
+    if(btnRow.children.length>0) el.appendChild(btnRow);
+    list.appendChild(el);
+  });
+}
+
+// ===== QUESTIONS =====
+// 回答テンプレート
+var ANS_TEMPLATES = {
+  '使い方・操作方法': [
+    'P2SはBambu Studio、K1CはCreality PrintでスライスしてWi-Fi送信してください。詳しくは「使い方ガイド」タブをご覧ください。',
+    '操作で不明な点は「使い方ガイド」→各機種のタブで手順を確認してください。それでも解決しない場合はサポートします。'
+  ],
+  'フィラメントについて': [
+    'フィラメントの種類によって温度設定が異なります。PLA（標準）以外は必ず先生の許可を得てください。ABSは換気が必要です。',
+    'フィラメントの交換は必ず先生の立ち会いのもとで行ってください。交換手順は使い方ガイドに記載があります。'
+  ],
+  'スライサーソフト': [
+    'P2S用はBambu Studio、K1C用はCreality Printです。どちらも無料。「使い方ガイド」→「ソフトウェア」で確認できます。',
+    'スライサーで所要時間を確認してから予約を入れてください。余裕をもった時間で設定することをおすすめします。'
+  ],
+  '印刷品質の改善': [
+    'レイヤー厚を0.1〜0.2mmに調整し、Bambu StudioのQualityプリセットを試してみてください。',
+    '表面がざらつく場合はフィラメントの吸湿が原因のことがあります。乾燥剤と一緒に保管してください。'
+  ],
+  'エラー・トラブル': [
+    '「トラブル対応」タブで該当するエラーを確認してください。解決しない場合は状況を詳しく教えてください。',
+    'エラーコードと状況をもう少し詳しく教えてください。実際に確認してサポートします。'
+  ],
+  '予約について': [
+    '最大1か月先まで予約できます。放課後は最大2台まで。開始時刻＋所要時間（分）で入力してください。',
+    '中学生は事前に中学理科の先生と石川先生の承認が必要です。承認後に予約が確定します。'
+  ],
+  'その他': [
+    '内容を確認しました。詳しく調べてから回答します。少々お待ちください。',
+    'ご質問ありがとうございます。直接確認させてください。都合のいい時間を教えてください。'
+  ]
+};
+
+function submitQ(){
+  var cat=document.getElementById('q-cat').value;
+  var text=document.getElementById('q-text').value.trim();
+  var msg=document.getElementById('q-msg');
+  var hint=document.getElementById('q-mail-hint');
+  var linkWrap=document.getElementById('q-mail-link-wrap');
+  if(!text){msg.style.color='var(--red)';msg.textContent='質問内容を入力してください';return;}
+  var q={
+    id:++qid,user:CU.name,grade:CU.grade,cls:CU.cls,email:CU.email,
+    cat:cat,text:text,ans:null,ansBy:null,ansType:null,
+    time:new Date().toISOString().replace('T',' ').slice(0,16)
+  };
+  QS.unshift(q);
+  saveData();
+  // ③ 質問送信 → 管理者2名へ送信（EmailJS有効時は自動送信、無効時はmailto）
+  msg.style.color='var(--blue)';
+  msg.textContent = EJS.ready ? '送信中…' : '質問を保存しました。Outlookが開くので送信ボタンを押してください。';
+  emailAdminsNewQuestion(q);
+  hint.style.display='none';
+  linkWrap.style.display='none';
+  document.getElementById('q-text').value='';
+  renderQList();
+  updateStats();
+  updateAdminBadges();
+  setTimeout(function(){msg.textContent='';},8000);
+}
+
+// ===== 緊急・トラブル報告 =====
+function sendTroubleReport(type){
+  var titles = {
+    smoke:'【緊急】3Dプリンターから異臭・煙が発生しました',
+    nores:'【報告】3Dプリンターが応答しません',
+    quality:'【相談】3Dプリンターの印刷品質トラブル',
+    other:'【相談】3Dプリンタートラブル'
+  };
+  var bodies = {
+    smoke:'緊急事態が発生しました。\n\n状況：プリンターから異臭・煙が出ました。\n直ちに印刷を停止し、電源を切って換気しました。\n\n報告者：' + (CU.name||'（ログイン前）') + '\n場所：3Dプリンター設置室\n\n至急ご対応をお願いします。',
+    nores:'トラブルが発生しました。\n\n状況：プリンターが応答しません。電源ケーブルの確認と再起動を試みましたが解決しません。\n\n報告者：' + (CU.name||'（ログイン前）') + '\n\nご確認をお願いします。',
+    quality:'印刷品質のトラブルが発生しています。\n\n状況：印刷品質が悪い（層ずれ・穴・粗い表面など）\n\n報告者：' + (CU.name||'（ログイン前）') + '\n\nスライサー設定の確認等、アドバイスをお願いします。',
+    other:'3Dプリンタートラブルの相談です。\n\n報告者：' + (CU.name||'（ログイン前）') + '\n\n状況を詳しく教えてください。'
+  };
+  var subject = titles[type] || titles.other;
+  var message = bodies[type] || bodies.other;
+  openMailto(SATAKE_MAIL, ISHIKAWA_MAIL, subject, message);
+}
+
+function renderQList(){
+  var list=document.getElementById('q-list-content');list.innerHTML='';
+  var mine=QS.filter(function(q){return q.user===CU.name;});
+  if(!mine.length){list.innerHTML='<div class="empty">質問はまだありません</div>';return;}
+  mine.forEach(function(q){
+    var el=document.createElement('div');el.className='q-item';
+    var sb=q.ans?'<span class="badge b-ans">回答済み</span>':'<span class="badge b-wait">回答待ち</span>';
+    el.innerHTML='<div class="q-meta"><span class="time-chip">'+q.time+'</span><span class="badge b-info">'+q.cat+'</span>'+sb+'</div><div class="q-body">'+q.text+'</div>';
+    if(q.ans){
+      var ans=document.createElement('div');ans.className='q-ans';
+      ans.innerHTML='<div class="q-ans-label" style="color:var(--purple)">'+q.ansBy+' より回答</div><div class="q-ans-text">'+q.ans+'</div>';
+      el.appendChild(ans);
+    }
+    // 削除ボタン（回答前のみ）
+    if(!q.ans){
+      var qDelBtn=document.createElement('button');
+      qDelBtn.className='btn btn-danger btn-sm';
+      qDelBtn.style.marginTop='8px';
+      qDelBtn.textContent='削除';
+      qDelBtn.onclick=(function(id){return function(){
+        if(confirm('この質問を削除しますか？')){
+          QS=QS.filter(function(x){return x.id!==id;});
+          saveData();renderQList();updateStats();updateAdminBadges();
+        }
+      };})(q.id);
+      el.appendChild(qDelBtn);
+    }
+    list.appendChild(el);
+  });
+}
+
+// ===== ADMIN =====
+function adminTab(id,btn){
+  ['reservations','questions','approve'].forEach(function(t){
+    var e=document.getElementById('admin-'+t);
+    if(e)e.style.display='none';
+  });
+  document.querySelectorAll('#panel-admin .tab').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('admin-'+id).style.display='';
+  if(btn)btn.classList.add('active');
+  if(id==='reservations')renderAdminRes();
+  if(id==='questions')renderAdminQ();
+  if(id==='approve')renderAdminApprove();
+}
+
+function renderAdminRes(){
+  var list=document.getElementById('admin-res-list');list.innerHTML='';
+  var sorted=RES.slice().sort(function(a,b){return (a.date+a.time).localeCompare(b.date+b.time);});
+  if(!sorted.length){list.innerHTML='<div class="empty">予約はありません</div>';return;}
+  sorted.forEach(function(r){
+    var el=document.createElement('div');el.className='admin-res-item';
+    var pn=r.printer==='k1c'?'K1C':'P2S';
+    var sb=statusBadge(r.status);
+    el.innerHTML='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+r.grade+' '+r.cls+' '+r.user+' '+sb+'</div><div style="font-size:11px;color:var(--text2)">'+pn+' / '+r.date+' '+r.time+'〜'+r.dur+'分 / '+r.purpose+' / '+r.detail+'</div></div>';
+    var btnRow=document.createElement('div');btnRow.style.display='flex';btnRow.style.gap='5px';btnRow.style.flexWrap='wrap';
+    if(r.status==='pending'){
+      var apprBtn=document.createElement('button');apprBtn.className='btn btn-green btn-xs';apprBtn.textContent='承認';
+      apprBtn.onclick=(function(id){return function(){var item=RES.find(function(x){return x.id===id;});item.status='approved';saveData();emailUserReservationApproved(item);renderAdminRes();renderAdminApprove();renderCalendar();updateAdminBadges();updateStats();}})(r.id);
+      btnRow.appendChild(apprBtn);
+    }
+    if(r.status==='approved'){
+      var revokeBtn=document.createElement('button');revokeBtn.className='btn btn-xs';revokeBtn.style.background='var(--orange-l)';revokeBtn.style.color='var(--orange)';revokeBtn.style.borderColor='#F5C97A';revokeBtn.textContent='承認取消';
+      revokeBtn.onclick=(function(id){return function(){if(confirm('承認を取り消して「承認待ち」に戻しますか？')){RES.find(function(x){return x.id===id;}).status='pending';saveData();renderAdminRes();renderAdminApprove();renderCalendar();updateAdminBadges();updateStats();}}})(r.id);
+      btnRow.appendChild(revokeBtn);
+    }
+    if(r.status!=='done'){
+      var delBtn=document.createElement('button');delBtn.className='btn btn-danger btn-xs';delBtn.textContent='削除';
+      delBtn.onclick=(function(id){return function(){if(confirm('この予約を削除しますか？')){RES=RES.filter(function(x){return x.id!==id;});saveData();renderAdminRes();renderAdminApprove();renderCalendar();updateAdminBadges();updateStats();}}})(r.id);
+      btnRow.appendChild(delBtn);
+    }
+    if(btnRow.children.length>0)el.appendChild(btnRow);
+    list.appendChild(el);
+  });
+}
+
+function renderAdminQ(){
+  var list=document.getElementById('admin-q-list');list.innerHTML='';
+  var sorted=QS.slice().sort(function(a,b){return a.ans?1:-1;});
+  if(!sorted.length){list.innerHTML='<div class="empty">質問はありません</div>';return;}
+  sorted.forEach(function(q){
+    var el=document.createElement('div');el.className='admin-q-item';
+    var sb=q.ans?'<span class="badge b-ans">回答済み</span>':'<span class="badge b-wait">回答待ち</span>';
+    el.innerHTML=
+      '<div class="q-meta">'+
+      '<span class="time-chip">'+q.time+'</span>'+
+      '<span style="font-size:12px;font-weight:600">'+q.grade+(q.cls?' '+q.cls:'')+' '+q.user+'</span>'+
+      '<span style="font-size:11px;color:var(--text3)">'+q.email+'</span>'+
+      '<span class="badge b-info">'+q.cat+'</span>'+sb+
+      '</div>'+
+      '<div class="q-body">'+q.text+'</div>';
+
+    if(q.ans){
+      var ansEl=document.createElement('div');ansEl.className='q-ans';
+      ansEl.innerHTML=
+        '<div class="q-ans-label" style="color:var(--purple)">'+q.ansBy+' より回答済み</div>'+
+        '<div class="q-ans-text">'+q.ans+'</div>';
+      el.appendChild(ansEl);
+    } else {
+      // ===== テンプレート＋自由記入の回答フォーム =====
+      var replyWrap=document.createElement('div');
+      replyWrap.className='q-reply-box open';
+      replyWrap.style.cssText='margin-top:10px;padding:12px;background:#fff;border-radius:var(--radius);border:1px solid var(--border)';
+
+      // テンプレート選択
+      var templates = ANS_TEMPLATES[q.cat] || ANS_TEMPLATES['その他'];
+      var tmplHtml='<div style="margin-bottom:8px"><label style="margin-top:0;font-weight:600;color:var(--purple)">テンプレートから選択（クリックで挿入）</label><div style="display:flex;flex-direction:column;gap:5px;margin-top:4px">';
+      templates.forEach(function(t){
+        // data-tmpl に本文を持たせ、onclick は data-qid だけ参照するので引用符衝突なし
+        tmplHtml+='<div class="tmpl-btn" data-tmpl="'+t.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')+'" data-qid="reply-'+q.id+'" style="background:var(--purple-l);border:1px solid #C0B5EE;border-radius:var(--radius);padding:7px 10px;font-size:12px;color:var(--purple);cursor:pointer;line-height:1.5" onclick="insertTemplate(this)">'+t+'</div>';
+      });
+      tmplHtml+='</div></div>';
+
+      var labelDiv=document.createElement('div');
+      labelDiv.innerHTML=
+        tmplHtml+
+        '<label style="margin-top:4px;font-weight:600">回答を入力（テンプレートを選んで追記・編集できます）</label>'+
+        '<textarea id="reply-'+q.id+'" style="min-height:80px;margin-top:4px" placeholder="回答内容を入力してください。テンプレートを選ぶと自動で挿入されます。"></textarea>'+
+        '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap" id="reply-btns-'+q.id+'"></div>';
+      replyWrap.appendChild(labelDiv);
+
+      // 送信ボタン
+      var sendBtn=document.createElement('button');
+      sendBtn.className='btn btn-primary btn-sm';
+      sendBtn.textContent='回答して質問者に通知（メール）';
+      sendBtn.onclick=(function(qid_){return function(){
+        var ta=document.getElementById('reply-'+qid_);
+        var txt=ta?ta.value.trim():'';
+        if(!txt){alert('回答を入力してください');return;}
+        var qItem=QS.find(function(x){return x.id===qid_;});
+        qItem.ans=txt;qItem.ansBy=CU.name;qItem.ansType='admin';
+        saveData();
+        renderAdminQ();renderQList();updateStats();updateAdminBadges();
+        // ④ 回答 → 質問者へOutlookを自動で開く
+        emailUserQuestionAnswered(qItem, txt, CU.name);
+      };})(q.id);
+
+      // クリアボタン
+      var clearBtn=document.createElement('button');
+      clearBtn.className='btn btn-sm';
+      clearBtn.textContent='クリア';
+      clearBtn.onclick=(function(qid_){return function(){
+        var ta=document.getElementById('reply-'+qid_);
+        if(ta)ta.value='';
+      };})(q.id);
+
+      replyWrap.querySelector('[id^="reply-btns-"]').appendChild(sendBtn);
+      replyWrap.querySelector('[id^="reply-btns-"]').appendChild(clearBtn);
+      el.appendChild(replyWrap);
+    }
+    // 管理者：質問の削除ボタン
+    var qAdminDelBtn=document.createElement('button');
+    qAdminDelBtn.className='btn btn-danger btn-xs';
+    qAdminDelBtn.style.marginTop='8px';
+    qAdminDelBtn.textContent='質問を削除';
+    qAdminDelBtn.onclick=(function(id){return function(){
+      if(confirm('この質問を削除しますか？')){
+        QS=QS.filter(function(x){return x.id!==id;});
+        saveData();renderAdminQ();renderQList();updateStats();updateAdminBadges();
+      }
+    };})(q.id);
+    el.appendChild(qAdminDelBtn);
+    list.appendChild(el);
+  });
+}
+
+function insertTemplate(el){
+  var taId=el.getAttribute('data-qid');
+  var ta=document.getElementById(taId);
+  if(!ta)return;
+  var tmpl=el.getAttribute('data-tmpl');
+  ta.value = ta.value ? ta.value + '\n\n' + tmpl : tmpl;
+  ta.focus();
+  ta.scrollTop=ta.scrollHeight;
+}
+
+function renderAdminApprove(){
+  var list=document.getElementById('admin-approve-list');
+  if(!list)return;
+  list.innerHTML='';
+  // Show pending + recently-revoked (pending that were approved)
+  var pending=RES.filter(function(r){return r.status==='pending';});
+  var approved=RES.filter(function(r){return r.status==='approved';});
+  if(!pending.length && !approved.length){list.innerHTML='<div class="empty">承認待ちの予約はありません</div>';return;}
+  
+  // Pending section
+  if(pending.length){
+    var ph=document.createElement('div');ph.style.cssText='font-size:11px;font-weight:700;color:var(--orange);margin-bottom:6px;margin-top:4px';ph.textContent='▼ 承認待ち（'+pending.length+'件）';list.appendChild(ph);
+    pending.forEach(function(r){
+      var el=document.createElement('div');el.className='admin-res-item';
+      var pn=r.printer==='k1c'?'K1C（機体①）':'P2S（機体②）';
+      el.innerHTML='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+r.grade+' '+r.cls+' '+r.user+' <span class="badge b-pending">承認待ち</span></div><div style="font-size:11px;color:var(--text2)">'+pn+' / '+r.date+' '+r.time+'〜'+r.dur+'分 / '+r.purpose+' / '+r.detail+'</div></div>';
+      var btnRow=document.createElement('div');btnRow.style.display='flex';btnRow.style.gap='5px';
+      var apprBtn=document.createElement('button');apprBtn.className='btn btn-green btn-xs';apprBtn.textContent='承認';
+      apprBtn.onclick=(function(id){return function(){
+        var item=RES.find(function(x){return x.id===id;});
+        item.status='approved';
+        saveData();
+        // ② 承認 → 予約者へ自動メール
+        emailUserReservationApproved(item);
+        renderAdminApprove();renderAdminRes();renderCalendar();updateAdminBadges();updateStats();
+      };})(r.id);
+      var rejBtn=document.createElement('button');rejBtn.className='btn btn-danger btn-xs';rejBtn.textContent='却下・削除';
+      rejBtn.onclick=(function(id){return function(){
+        if(confirm('この予約を却下して削除しますか？')){RES=RES.filter(function(x){return x.id!==id;});saveData();renderAdminApprove();renderAdminRes();renderCalendar();updateAdminBadges();updateStats();}
+      };})(r.id);
+      btnRow.appendChild(apprBtn);btnRow.appendChild(rejBtn);
+      el.appendChild(btnRow);list.appendChild(el);
+    });
+  }
+
+  // Approved section (with revoke option)
+  if(approved.length){
+    var ah=document.createElement('div');ah.style.cssText='font-size:11px;font-weight:700;color:var(--green);margin-bottom:6px;margin-top:10px';ah.textContent='▼ 承認済み（'+approved.length+'件）— 取消可能';list.appendChild(ah);
+    approved.forEach(function(r){
+      var el=document.createElement('div');el.className='admin-res-item';
+      var pn=r.printer==='k1c'?'K1C（機体①）':'P2S（機体②）';
+      el.innerHTML='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+r.grade+' '+r.cls+' '+r.user+' <span class="badge b-approved">承認済</span></div><div style="font-size:11px;color:var(--text2)">'+pn+' / '+r.date+' '+r.time+'〜'+r.dur+'分 / '+r.purpose+'</div></div>';
+      var btnRow=document.createElement('div');btnRow.style.display='flex';btnRow.style.gap='5px';
+      var revokeBtn=document.createElement('button');
+      revokeBtn.className='btn btn-xs';
+      revokeBtn.style.cssText='background:var(--orange-l);color:var(--orange);border-color:#F5C97A';
+      revokeBtn.textContent='承認取消';
+      revokeBtn.onclick=(function(id){return function(){
+        if(confirm('承認を取り消して「承認待ち」に戻しますか？')){
+          RES.find(function(x){return x.id===id;}).status='pending';
+          saveData();
+          renderAdminApprove();renderAdminRes();renderCalendar();updateAdminBadges();updateStats();
+        }
+      };})(r.id);
+      var delBtn2=document.createElement('button');delBtn2.className='btn btn-danger btn-xs';delBtn2.textContent='削除';
+      delBtn2.onclick=(function(id){return function(){
+        if(confirm('この予約を削除しますか？')){RES=RES.filter(function(x){return x.id!==id;});saveData();renderAdminApprove();renderAdminRes();renderCalendar();updateAdminBadges();updateStats();}
+      };})(r.id);
+      btnRow.appendChild(revokeBtn);btnRow.appendChild(delBtn2);
+      el.appendChild(btnRow);list.appendChild(el);
+    });
+  }
+}
+
+// ===== PW CHANGE =====
+function togglePwChange(){
+  var w=document.getElementById('pw-change-wrap');
+  var isHidden = w.style.display==='none' || w.style.display==='';
+  w.style.display = isHidden ? 'block' : 'none';
+  if(isHidden){document.getElementById('new-pw1').value='';document.getElementById('new-pw2').value='';document.getElementById('pw-msg').textContent='';}
+}
+function changePw(){
+  var p1=document.getElementById('new-pw1').value;
+  var p2=document.getElementById('new-pw2').value;
+  var msg=document.getElementById('pw-msg');
+  if(!p1||p1.length<4){msg.style.color='var(--red)';msg.textContent='4文字以上のパスワードを入力してください';return;}
+  if(p1!==p2){msg.style.color='var(--red)';msg.textContent='パスワードが一致しません';return;}
+  ADMIN_PASSWORDS[CU.adminRole]=p1;
+  saveData();
+  msg.style.color='var(--green)';msg.textContent='パスワードを変更しました';
+  document.getElementById('new-pw1').value='';document.getElementById('new-pw2').value='';
+  setTimeout(function(){msg.textContent='';document.getElementById('pw-change-wrap').style.display='none';},2000);
+}
+
+// ===== GUIDE TABS =====
+function gTab(id,btn){
+  ['basic','p2s','k1c','sw'].forEach(function(t){var e=document.getElementById('g-'+t);if(e)e.style.display='none';});
+  document.querySelectorAll('#panel-guide .tab').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('g-'+id).style.display='';if(btn)btn.classList.add('active');
+}
+
+// ===== FLOW TABS =====
+function flowTab(id,btn){
+  ['hs','jhs','teacher'].forEach(function(t){var e=document.getElementById('flow-'+t);if(e)e.style.display='none';});
+  document.querySelectorAll('#panel-flow .tab').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('flow-'+id).style.display='';if(btn)btn.classList.add('active');
+}
+
+// ===== QA TABS =====
+function qaTab(id,btn){
+  ['ask','list','faq'].forEach(function(t){var e=document.getElementById('qa-'+t);if(e)e.style.display='none';});
+  document.querySelectorAll('#panel-qa .tab').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('qa-'+id).style.display='';if(btn)btn.classList.add('active');
+  if(id==='list')renderQList();
+}
+
+// ===== TROUBLE TABS =====
+function trTab(id,btn){
+  ['p2s','k1c','gen'].forEach(function(t){var e=document.getElementById('tr-'+t);if(e)e.style.display='none';});
+  document.querySelectorAll('#panel-trouble .tab').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('tr-'+id).style.display='';if(btn)btn.classList.add('active');
+}
+
+// ===== FAQ TOGGLE =====
+function toggleFaq(el){
+  var a=el.nextElementSibling;
+  a.classList.toggle('open');
+  el.querySelector('span').textContent=a.classList.contains('open')?'▾':'▸';
+}
+
+// ===== 定期同期（30秒ごとにlocalStorageから再読込・ステータス更新）=====
+setInterval(function(){
+  if (!CU.name) return;
+  loadData();
+  autoUpdateStatus();
+  saveData();
+  renderCalendar();
+  renderMyRes();
+  renderPrinterStatus();
+  updateStats();
+  updateAdminBadges();
+  if (CU.isAdmin) { renderAdminRes(); renderAdminQ(); renderAdminApprove(); }
+  if (selDate) renderDayRes(selDate);
+}, 30000);
+</script>
+</body>
+</html>
